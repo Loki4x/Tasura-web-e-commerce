@@ -189,12 +189,8 @@ h2,.promo h3{font-family:var(--serif);font-weight:600;letter-spacing:-.3px}
 .logo{letter-spacing:-.5px}
 .logo span{color:var(--muted)}
 .topbar{letter-spacing:.3px}
-.hero-emoji,.about-img,.feature span,.hero-card,.cart-empty,
-.thumb:not(:has(img)),.ci-thumb:not(:has(img)){filter:grayscale(1)}
-.hero-emoji{filter:grayscale(1) drop-shadow(0 20px 30px rgba(0,0,0,.35))}
 .card{border-color:#ededed}
 .card:hover{border-color:#d0d0d0}
 .chip{border-color:#dcdcdc}
 .price b{color:var(--primary)}
 ::selection{background:#0a0a0a;color:#fff}
-.pill,.meta{filter:grayscale(1)}
