@@ -6,81 +6,144 @@
   <title>Tasura — Belanja Mudah, Kualitas Terbaik</title>
   <meta name="description" content="Tasura - toko online terpercaya. Produk berkualitas, harga bersahabat, pesan langsung via WhatsApp." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <meta name="theme-color" content="#0a0a0a" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Top bar -->
-  <div class="topbar">🚚 Gratis ongkir untuk pembelian di atas Rp200.000 • Pesan via WhatsApp, respon cepat!</div>
+  <!-- Announcement bar -->
+  <div class="announce" id="announce">
+    <p>🎁 Daftar akun Tasura &amp; nikmati checkout lebih cepat serta promo khusus member. <a href="#" id="announceCta">Daftar Sekarang</a></p>
+    <button class="announce-close" id="announceClose" aria-label="Tutup">✕</button>
+  </div>
 
   <!-- Header -->
   <header class="header">
     <div class="container header-inner">
-      <a href="#" class="logo">tasura<span>.</span></a>
+      <a href="#beranda" class="logo">Tasura</a>
       <nav class="nav" id="nav">
         <a href="#beranda">Beranda</a>
-        <a href="#produk">Produk</a>
-        <a href="#tentang">Tentang</a>
-        <a href="#kontak">Kontak</a>
+        <div class="dropdown">
+          <button type="button" class="dropdown-toggle">Koleksi <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+          <div class="dropdown-menu" id="navCategories"></div>
+        </div>
+        <a href="#tentang">Tentang Kami</a>
+        <a href="#cara-pesan">Cara Pemesanan</a>
+        <a href="#produk">Belanja</a>
       </nav>
       <div class="header-actions">
         <div class="search">
-          <input type="search" id="searchInput" placeholder="Cari produk..." />
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" id="searchInput" placeholder="Cari..." />
         </div>
-        <button class="icon-btn account-btn" id="accountBtn" aria-label="Akun"></button>
-        <button class="icon-btn" id="cartBtn" aria-label="Keranjang">
+        <button class="icon-btn plain" id="cartBtn" aria-label="Keranjang">
           <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
           <span class="badge" id="cartCount">0</span>
         </button>
-        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menu">
+        <button class="account-btn" id="accountBtn" aria-label="Akun"></button>
+        <button class="icon-btn plain menu-btn" id="menuBtn" aria-label="Menu">
           <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Hero -->
+  <!-- Hero slider -->
   <section class="hero" id="beranda">
-    <div class="container hero-inner">
-      <div class="hero-text">
-        <span class="pill">✨ Koleksi Terbaru 2026</span>
-        <h1>Tampil Percaya Diri<br/>Bersama <em>Tasura</em></h1>
-        <p>Temukan produk pilihan dengan kualitas terbaik dan harga bersahabat. Belanja mudah, aman, dan cepat langsung dari genggamanmu.</p>
-        <div class="hero-cta">
-          <a href="#produk" class="btn btn-primary">Belanja Sekarang</a>
-          <a href="#tentang" class="btn btn-ghost">Tentang Kami</a>
-        </div>
-        <div class="stats">
-          <div><b>5rb+</b><span>Pelanggan</span></div>
-          <div><b>4.9★</b><span>Rating</span></div>
-          <div><b>100%</b><span>Original</span></div>
+    <div class="slides" id="slides">
+      <div class="slide active">
+        <div class="container slide-inner">
+          <div class="slide-text">
+            <span class="eyebrow">Koleksi Terbaru 2026</span>
+            <h1>Tampil Percaya Diri, Setiap Hari</h1>
+            <p>Produk pilihan Tasura dibuat dengan bahan berkualitas dan desain yang timeless, nyaman dipakai ke mana saja.</p>
+            <a href="#produk" class="btn btn-light">Belanja Sekarang</a>
+          </div>
+          <div class="slide-visual"><span>👜</span><span>👟</span><span>⌚</span></div>
         </div>
       </div>
-      <div class="hero-visual">
-        <div class="blob"></div>
-        <div class="hero-card c1">🛍️<span>Diskon s/d 50%</span></div>
-        <div class="hero-card c2">⭐<span>Produk Terlaris</span></div>
-        <div class="hero-emoji">👜</div>
+      <div class="slide">
+        <div class="container slide-inner">
+          <div class="slide-text">
+            <span class="eyebrow">Promo Member Baru</span>
+            <h1>Hemat 10% di Pesanan Pertamamu</h1>
+            <p>Gunakan kode <b>TASURA10</b> saat checkout. Berlaku untuk semua produk, tanpa minimum belanja.</p>
+            <a href="#produk" class="btn btn-light">Ambil Promo</a>
+          </div>
+          <div class="slide-visual"><span>🧥</span><span>🎒</span><span>🕶️</span></div>
+        </div>
+      </div>
+    </div>
+    <button class="slide-nav prev" id="slidePrev" aria-label="Sebelumnya"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+    <button class="slide-nav next" id="slideNext" aria-label="Berikutnya"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+    <div class="dots" id="dots"></div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee">
+    <div class="marquee-track" id="marquee">
+      <span>📦 Paket dikemas dengan rapi</span>
+      <span>🛡️ Garansi produk 7 hari</span>
+      <span>🚚 Pengiriman ke seluruh Indonesia</span>
+      <span>💬 Respon cepat via WhatsApp</span>
+    </div>
+  </div>
+
+  <!-- Popular -->
+  <section class="section container" id="populer">
+    <h2 class="big-title center">Paling Populer</h2>
+    <div class="popular-grid" id="popularGrid"></div>
+    <div class="center"><a href="#produk" class="btn btn-outline-lg">Lihat Semua Koleksi</a></div>
+  </section>
+
+  <!-- Quality / About -->
+  <section class="section container quality" id="tentang">
+    <div class="quality-text">
+      <h2 class="big-title">Kualitas di Atas Segalanya</h2>
+      <p>Di Tasura, setiap produk kami pilih dan cek satu per satu, mulai dari bahan, jahitan, sampai finishing. Kami ingin kamu mendapatkan barang yang awet, nyaman, dan tetap terlihat stylish.</p>
+      <div class="stats">
+        <div><b>100%</b><span>Produk Original</span></div>
+        <div><b>5rb+</b><span>Pelanggan Bahagia</span></div>
+        <div><b>4.9/5</b><span>Rating Pelanggan</span></div>
+      </div>
+    </div>
+    <div class="quality-visual">
+      <span class="quality-emoji">🛍️</span>
+      <div class="quality-badge"><b>Kualitas Premium</b><span>Terjamin</span></div>
+    </div>
+  </section>
+
+  <!-- How to order -->
+  <section class="steps-wrap" id="cara-pesan">
+    <div class="container">
+      <h2 class="big-title center">Cara Pemesanan</h2>
+      <p class="section-sub center">Belanja di Tasura cuma butuh tiga langkah mudah.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+          <h3>Pilih Produk Favoritmu</h3>
+          <p>Jelajahi koleksi Tasura dan temukan produk yang paling cocok dengan gayamu.</p>
+        </div>
+        <div class="step">
+          <div class="step-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg></div>
+          <h3>Checkout Tanpa Ribet</h3>
+          <p>Masukkan ke keranjang, isi alamat pengiriman, lalu pilih metode pembayaran.</p>
+        </div>
+        <div class="step">
+          <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></div>
+          <h3>Konfirmasi &amp; Terima Paket</h3>
+          <p>Pesanan dikonfirmasi via WhatsApp dan dikirim cepat dengan packing aman.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Features -->
-  <section class="features container">
-    <div class="feature"><span>🚚</span><div><b>Pengiriman Cepat</b><p>Ke seluruh Indonesia</p></div></div>
-    <div class="feature"><span>🔒</span><div><b>Pembayaran Aman</b><p>Transfer, e-wallet, COD</p></div></div>
-    <div class="feature"><span>↩️</span><div><b>Garansi Retur</b><p>7 hari pengembalian</p></div></div>
-    <div class="feature"><span>💬</span><div><b>CS Responsif</b><p>Siap bantu via WhatsApp</p></div></div>
-  </section>
-
-  <!-- Products -->
-  <section class="products container" id="produk">
+  <!-- Full catalog -->
+  <section class="section container" id="produk">
     <div class="section-head">
       <div>
-        <h2>Produk Kami</h2>
-        <p>Pilihan terbaik untuk kebutuhanmu</p>
+        <h2 class="big-title">Semua Koleksi</h2>
+        <p class="section-sub">Pilihan terbaik untuk kebutuhanmu</p>
       </div>
       <select id="sortSelect" class="sort">
         <option value="default">Urutkan: Rekomendasi</option>
@@ -94,63 +157,78 @@
     <p class="empty" id="emptyState" hidden>Produk tidak ditemukan 😕</p>
   </section>
 
-  <!-- Promo banner -->
-  <section class="container">
-    <div class="promo">
-      <div>
-        <h3>Promo Spesial Member Baru!</h3>
-        <p>Gunakan kode <b>TASURA10</b> saat checkout untuk potongan 10%.</p>
-      </div>
-      <a href="#produk" class="btn btn-light">Ambil Promo</a>
-    </div>
-  </section>
-
-  <!-- About -->
-  <section class="about container" id="tentang">
-    <div class="about-img">🏬</div>
-    <div>
-      <h2>Tentang Tasura</h2>
-      <p>Tasura hadir untuk memberikan pengalaman belanja online yang mudah, nyaman, dan terpercaya. Setiap produk kami pilih dengan teliti agar kamu mendapatkan kualitas terbaik dengan harga yang bersahabat.</p>
-      <ul class="checks">
-        <li>Produk dikurasi & dicek sebelum dikirim</li>
-        <li>Packing rapi dan aman</li>
-        <li>Pelayanan ramah dan cepat</li>
-      </ul>
-    </div>
-  </section>
-
   <!-- Testimonials -->
-  <section class="container testi-wrap">
-    <h2 class="center">Kata Mereka</h2>
+  <section class="section container">
+    <h2 class="big-title center">Pelanggan Kami yang Bahagia</h2>
+    <p class="section-sub center">Cerita dari mereka yang sudah merasakan kualitas produk Tasura.</p>
     <div class="testis">
-      <div class="testi"><p>"Barangnya bagus banget, sesuai foto. Pengiriman juga cepat!"</p><b>— Rina, Jakarta</b></div>
-      <div class="testi"><p>"Admin ramah dan fast respon. Pasti order lagi di Tasura."</p><b>— Dimas, Bandung</b></div>
-      <div class="testi"><p>"Harga terjangkau, kualitas premium. Recommended!"</p><b>— Sari, Surabaya</b></div>
+      <div class="testi"><div class="testi-head"><span class="avatar">R</span><div><b>Rina</b><small>Jakarta</small></div></div><div class="stars">⭐⭐⭐⭐⭐</div><p>"Barangnya bagus banget, sesuai foto. Pengiriman juga cepat!"</p></div>
+      <div class="testi"><div class="testi-head"><span class="avatar">D</span><div><b>Dimas</b><small>Bandung</small></div></div><div class="stars">⭐⭐⭐⭐⭐</div><p>"Admin ramah dan fast respon. Pasti order lagi di Tasura."</p></div>
+      <div class="testi"><div class="testi-head"><span class="avatar">S</span><div><b>Sari</b><small>Surabaya</small></div></div><div class="stars">⭐⭐⭐⭐⭐</div><p>"Harga terjangkau, kualitas premium. Recommended!"</p></div>
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="footer" id="kontak">
-    <div class="container footer-inner">
-      <div>
-        <a href="#" class="logo light">tasura<span>.</span></a>
-        <p>Belanja mudah, kualitas terbaik.</p>
-      </div>
-      <div>
-        <h4>Belanja</h4>
-        <a href="#produk">Semua Produk</a>
-        <a href="#produk">Produk Terlaris</a>
-        <a href="#produk">Promo</a>
-      </div>
-      <div>
-        <h4>Kontak</h4>
-        <a href="#" id="waLink">WhatsApp</a>
-        <a href="#">Instagram @tasura</a>
-        <a href="mailto:halo@tasura.id">halo@tasura.id</a>
-      </div>
+  <!-- FAQ -->
+  <section class="section container faq-wrap" id="faq">
+    <h2 class="big-title center">Tanya Jawab</h2>
+    <p class="section-sub center">Jawaban seputar produk, pembayaran, dan pengiriman agar kamu makin yakin belanja.</p>
+    <div class="faq" id="faqList">
+      <details open><summary>Apakah bisa tukar atau retur barang?</summary><p>Bisa. Kami menerima retur maksimal 7 hari setelah barang diterima, selama produk belum dipakai, label masih terpasang, dan disertai video unboxing.</p></details>
+      <details><summary>Bagaimana cara memesan di Tasura?</summary><p>Pilih produk, masukkan ke keranjang, lalu klik Checkout dan isi data pengiriman. Pesananmu akan otomatis terkirim ke WhatsApp admin untuk dikonfirmasi.</p></details>
+      <details><summary>Metode pembayaran apa saja yang tersedia?</summary><p>Transfer bank, e-wallet (OVO, DANA, GoPay), dan COD (bayar di tempat) untuk area tertentu.</p></details>
+      <details><summary>Berapa lama waktu pengiriman?</summary><p>Pesanan diproses 1x24 jam di hari kerja. Estimasi sampai 1–3 hari untuk Pulau Jawa dan 3–7 hari untuk luar Jawa.</p></details>
+      <details><summary>Apakah produk Tasura original?</summary><p>Ya, semua produk yang kami jual 100% original dan sudah melalui pengecekan kualitas sebelum dikirim.</p></details>
+      <details><summary>Bagaimana jika pesanan saya bermasalah?</summary><p>Hubungi kami lewat WhatsApp dengan menyertakan nomor pesanan dan foto/video kendala. Tim kami akan membantu secepatnya.</p></details>
     </div>
-    <div class="copy">© <span id="year"></span> Tasura. Semua hak dilindungi.</div>
+  </section>
+
+  <!-- CTA + Footer -->
+  <footer class="footer" id="kontak">
+    <div class="container">
+      <div class="cta">
+        <div>
+          <h2>Siap Upgrade Gayamu?</h2>
+          <p>Dapatkan promo eksklusif dan update koleksi terbaru dari Tasura.</p>
+        </div>
+        <a href="#produk" class="btn btn-light">Belanja Sekarang</a>
+      </div>
+      <div class="footer-inner">
+        <div>
+          <a href="#beranda" class="logo">Tasura</a>
+          <p class="footer-desc">Toko online pilihan dengan produk berkualitas dan harga bersahabat. Belanja mudah, aman, dan cepat.</p>
+          <div class="socials">
+            <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6"/></svg></a>
+            <a href="#" aria-label="TikTok"><svg viewBox="0 0 24 24"><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.5 2.5 2.5 4.5 5 5"/></svg></a>
+            <a href="#" class="waLink" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></a>
+          </div>
+        </div>
+        <div>
+          <h4>Belanja</h4>
+          <a href="#produk">Semua Koleksi</a>
+          <a href="#populer">Paling Populer</a>
+          <a href="#cara-pesan">Cara Pemesanan</a>
+        </div>
+        <div>
+          <h4>Bantuan</h4>
+          <a href="#faq">FAQ</a>
+          <a href="#faq">Info Pengiriman</a>
+          <a href="#faq">Kebijakan Retur</a>
+        </div>
+        <div>
+          <h4>Kontak</h4>
+          <p>Kota kamu, Indonesia</p>
+          <a href="mailto:halo@tasura.id">halo@tasura.id</a>
+          <a href="#" class="waLink" id="waText">WhatsApp</a>
+        </div>
+      </div>
+      <div class="copy">© <span id="year"></span> Tasura. Semua hak dilindungi.</div>
+    </div>
   </footer>
+
+  <!-- Floating chat -->
+  <a href="#" class="fab waLink" target="_blank" aria-label="Chat WhatsApp">
+    <svg viewBox="0 0 24 24"><path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z"/></svg>
+  </a>
 
   <!-- Cart drawer -->
   <div class="overlay" id="overlay"></div>

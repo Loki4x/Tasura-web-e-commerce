@@ -105,6 +105,7 @@ document.addEventListener("click", e => {
   }
 });
 $("#searchInput").addEventListener("input", e => { query = e.target.value; renderProducts(); });
+$("#searchInput").addEventListener("keydown", e => { if (e.key === "Enter") $("#produk").scrollIntoView({ behavior: "smooth" }); });
 $("#sortSelect").addEventListener("change", e => { sort = e.target.value; renderProducts(); });
 $("#cartBtn").onclick = openCart;
 $("#closeCart").onclick = closeCart;
@@ -151,6 +152,67 @@ $("#checkoutForm").onsubmit = e => {
 };
 
 $("#loginFromCheckout").onclick = e => { e.preventDefault(); $("#checkoutModal").classList.remove("show"); Auth.openAuth(); };
-$("#waLink").href = `https://wa.me/${STORE.whatsapp}`;
+document.querySelectorAll(".waLink").forEach(a => { a.href = `https://wa.me/${STORE.whatsapp}`; a.target = "_blank"; });
+
+// ====== Paling Populer (4 produk terlaris) ======
+function renderPopular() {
+  const top = [...PRODUCTS].sort((a, b) => b.terjual - a.terjual).slice(0, 4);
+  $("#popularGrid").innerHTML = top.map(p => `
+    <article class="pcard" data-detail="${p.id}">
+      <div class="thumb">${discPct(p) ? `<span class="disc">-${discPct(p)}%</span>` : ""}${thumbHTML(p)}</div>
+      <div class="pcard-body">
+        <div class="rate"><b>⭐ ${p.rating}</b>Terlaris • ${p.terjual} terjual</div>
+        <h3>${p.nama}</h3>
+        <div class="plabel">Harga</div>
+        <div class="pprice">${rupiah(p.harga)}${p.hargaCoret ? `<s>${rupiah(p.hargaCoret)}</s>` : ""}</div>
+      </div>
+    </article>`).join("");
+}
+
+// ====== Menu Koleksi (kategori) ======
+function renderNavCategories() {
+  const cats = ["Semua", ...new Set(PRODUCTS.map(p => p.kategori))];
+  $("#navCategories").innerHTML = cats.map(c => `<a data-navcat="${c}">${c === "Semua" ? "Semua Koleksi" : c}</a>`).join("");
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest("[data-navcat]");
+  if (a) {
+    activeCat = a.dataset.navcat; renderCategories(); renderProducts();
+    $("#nav").classList.remove("open"); document.querySelector(".dropdown").classList.remove("open");
+    $("#produk").scrollIntoView({ behavior: "smooth" });
+  }
+});
+document.querySelector(".dropdown-toggle").onclick = () => document.querySelector(".dropdown").classList.toggle("open");
+
+// ====== Hero slider ======
+(() => {
+  const slides = [...document.querySelectorAll(".slide")];
+  let i = 0, timer;
+  $("#dots").innerHTML = slides.map((_, n) => `<button aria-label="Slide ${n + 1}"></button>`).join("");
+  const dots = [...document.querySelectorAll("#dots button")];
+  const go = n => {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle("active", k === i));
+    dots.forEach((d, k) => d.classList.toggle("active", k === i));
+    clearInterval(timer); timer = setInterval(() => go(i + 1), 6000);
+  };
+  dots.forEach((d, n) => d.onclick = () => go(n));
+  $("#slidePrev").onclick = () => go(i - 1);
+  $("#slideNext").onclick = () => go(i + 1);
+  go(0);
+})();
+
+// ====== Marquee (diulang agar berjalan tanpa putus) ======
+$("#marquee").innerHTML += $("#marquee").innerHTML;
+
+// ====== FAQ: hanya satu terbuka ======
+document.querySelectorAll("#faqList details").forEach(d => d.addEventListener("toggle", () => {
+  if (d.open) document.querySelectorAll("#faqList details").forEach(o => o !== d && (o.open = false));
+}));
+
+// ====== Announcement bar ======
+if (sessionStorage.getItem("tasura_announce_closed")) $("#announce").hidden = true;
+$("#announceClose").onclick = () => { $("#announce").hidden = true; sessionStorage.setItem("tasura_announce_closed", "1"); };
+$("#announceCta").onclick = e => { e.preventDefault(); Auth.openAuth(Auth.loggedIn ? "login" : "register"); };
 $("#year").textContent = new Date().getFullYear();
-renderCategories(); renderProducts(); renderCart();
+renderCategories(); renderProducts(); renderCart(); renderPopular(); renderNavCategories();

@@ -3,6 +3,7 @@
 Website toko online statis (HTML, CSS, JavaScript). Tidak perlu server atau database.
 
 ## Fitur
+- Landing page: hero slider, Paling Populer, Kualitas, Cara Pemesanan, testimoni, FAQ, banner ajakan belanja
 - Katalog produk, pencarian, filter kategori, urutkan harga/rating
 - Keranjang belanja & checkout via WhatsApp, kode promo
 - **Akun pelanggan** (Supabase): daftar/masuk dengan email atau Google, lupa password,
@@ -15,6 +16,8 @@ Buka `index.html` di browser.
 - **Nomor WhatsApp & kode promo**: edit `STORE` di `products.js`
 - **Produk**: edit `PRODUCTS` di `products.js` (nama, harga, kategori, deskripsi)
 - **Foto produk**: simpan foto ke folder `img/`, lalu isi `gambar: "img/namafile.jpg"`
+- **Teks landing page** (hero, FAQ, testimoni, alamat di footer): edit langsung di `index.html`
+- **Produk Paling Populer**: otomatis 4 produk dengan `terjual` terbanyak
 - **Warna tema**: edit variabel `--primary` dan `--accent` di `style.css`
 
 ## Online gratis
