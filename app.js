@@ -116,6 +116,8 @@ $("#checkoutBtn").onclick = () => {
   if (!cart.length) return toast("Keranjang masih kosong");
   closeCart();
   $("#modalTotal").textContent = rupiah(finalTotal(""));
+  $("#loginHint").hidden = Auth.loggedIn;
+  Auth.prefill($("#checkoutForm"));
   $("#checkoutModal").classList.add("show");
 };
 $("#closeModal").onclick = () => $("#checkoutModal").classList.remove("show");
@@ -134,6 +136,13 @@ $("#checkoutForm").onsubmit = e => {
   const msg = `Halo *${STORE.nama}*, saya mau pesan:\n\n${items}\n\nSubtotal: ${rupiah(cartTotal())}` +
     (promoOk ? `\nPromo ${STORE.promo.kode}: -${STORE.promo.diskon * 100}%` : "") +
     `\n*Total: ${rupiah(finalTotal(f.promo))}*\n\n*Data Pengiriman*\nNama: ${f.nama}\nNo. HP: ${f.hp}\nAlamat: ${f.alamat}\nPembayaran: ${f.bayar}\n\nTerima kasih 🙏`;
+  // Simpan ke riwayat pesanan jika sudah login (tidak menunggu agar WhatsApp tidak diblokir popup blocker)
+  Auth.saveOrder({
+    items: cart.map(i => { const p = PRODUCTS.find(x => x.id === i.id); return { id: p.id, nama: p.nama, harga: p.harga, qty: i.qty }; }),
+    subtotal: cartTotal(), diskon: cartTotal() - finalTotal(f.promo), total: finalTotal(f.promo),
+    promo: promoOk ? STORE.promo.kode : null,
+    nama: f.nama, hp: f.hp, alamat: f.alamat, pembayaran: f.bayar,
+  });
   window.open(`https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
   cart = []; saveCart();
   e.target.reset();
@@ -141,6 +150,7 @@ $("#checkoutForm").onsubmit = e => {
   toast("Pesanan dikirim ke WhatsApp 🎉");
 };
 
+$("#loginFromCheckout").onclick = e => { e.preventDefault(); $("#checkoutModal").classList.remove("show"); Auth.openAuth(); };
 $("#waLink").href = `https://wa.me/${STORE.whatsapp}`;
 $("#year").textContent = new Date().getFullYear();
 renderCategories(); renderProducts(); renderCart();
