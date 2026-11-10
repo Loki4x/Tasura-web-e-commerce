@@ -6,12 +6,13 @@
   <title>Tasura — Belanja Mudah, Kualitas Terbaik</title>
   <meta name="description" content="Tasura - toko online terpercaya. Produk berkualitas, harga bersahabat, pesan langsung via WhatsApp." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#0a0a0a" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- Top bar -->
-  <div class="topbar">🚚 Gratis ongkir untuk pembelian di atas Rp200.000 • Pesan via WhatsApp, respon cepat!</div>
+  <div class="topbar">Gratis ongkir untuk pembelian di atas Rp200.000 • Pesan via WhatsApp, respon cepat!</div>
 
   <!-- Header -->
   <header class="header">
@@ -28,6 +29,7 @@
           <input type="search" id="searchInput" placeholder="Cari produk..." />
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         </div>
+        <button class="icon-btn account-btn" id="accountBtn" aria-label="Akun"></button>
         <button class="icon-btn" id="cartBtn" aria-label="Keranjang">
           <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
           <span class="badge" id="cartCount">0</span>
@@ -43,7 +45,7 @@
   <section class="hero" id="beranda">
     <div class="container hero-inner">
       <div class="hero-text">
-        <span class="pill">✨ Koleksi Terbaru 2026</span>
+        <span class="pill">Koleksi Terbaru 2026</span>
         <h1>Tampil Percaya Diri<br/>Bersama <em>Tasura</em></h1>
         <p>Temukan produk pilihan dengan kualitas terbaik dan harga bersahabat. Belanja mudah, aman, dan cepat langsung dari genggamanmu.</p>
         <div class="hero-cta">
@@ -171,6 +173,7 @@
         <h3>Data Pengiriman</h3>
         <button type="button" class="icon-btn" id="closeModal">✕</button>
       </div>
+      <p class="hint" id="loginHint"><a href="#" id="loginFromCheckout">Masuk</a> agar data terisi otomatis &amp; pesanan tersimpan di riwayat.</p>
       <label>Nama Lengkap<input name="nama" required /></label>
       <label>No. WhatsApp<input name="hp" type="tel" required /></label>
       <label>Alamat Lengkap<textarea name="alamat" rows="3" required></textarea></label>
@@ -190,9 +193,64 @@
     <div class="modal-box detail" id="detailBox"></div>
   </div>
 
+  <!-- Auth modal (login / daftar) -->
+  <div class="modal" id="authModal">
+    <div class="modal-box auth-box">
+      <div class="drawer-head">
+        <h3 id="authTitle">Masuk ke Tasura</h3>
+        <button type="button" class="icon-btn" id="closeAuth" aria-label="Tutup">✕</button>
+      </div>
+      <div class="tabs" id="authTabs">
+        <button type="button" data-mode="login" class="active">Masuk</button>
+        <button type="button" data-mode="register">Daftar</button>
+      </div>
+      <div id="googleWrap">
+        <button type="button" class="btn btn-google full" id="googleBtn">
+          <svg viewBox="0 0 48 48" class="g"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+          Lanjutkan dengan Google
+        </button>
+        <div class="divider"><span>atau dengan email</span></div>
+      </div>
+      <form id="authForm" class="form-grid">
+        <label id="fNama" hidden>Nama Lengkap<input name="nama" autocomplete="name" /></label>
+        <label id="fEmail">Email<input name="email" type="email" autocomplete="email" /></label>
+        <label id="fPass">Password<input name="password" type="password" minlength="6" /></label>
+        <a href="#" class="link right" id="forgotLink">Lupa password?</a>
+        <p class="msg" id="authMsg" hidden></p>
+        <button class="btn btn-primary full" id="authSubmit" type="submit">Masuk</button>
+        <a href="#" class="link center-text" id="backLink" hidden>← Kembali ke halaman masuk</a>
+      </form>
+    </div>
+  </div>
+
+  <!-- Account modal -->
+  <div class="modal" id="accountModal">
+    <div class="modal-box">
+      <div class="drawer-head">
+        <div><h3>Akun Saya</h3><span class="muted" id="accEmail"></span></div>
+        <button type="button" class="icon-btn" id="closeAccount" aria-label="Tutup">✕</button>
+      </div>
+      <div class="tabs" id="accTabs">
+        <button type="button" data-tab="profil" class="active">Profil</button>
+        <button type="button" data-tab="pesanan">Pesanan Saya</button>
+      </div>
+      <form id="profileForm" class="form-grid">
+        <label>Nama Lengkap<input name="nama" /></label>
+        <label>No. WhatsApp<input name="hp" type="tel" /></label>
+        <label>Alamat Pengiriman<textarea name="alamat" rows="3"></textarea></label>
+        <button class="btn btn-primary full" type="submit">Simpan Profil</button>
+      </form>
+      <div id="ordersList" class="orders" hidden></div>
+      <button type="button" class="btn btn-ghost full" id="logoutBtn">Keluar</button>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
   <script src="products.js"></script>
   <script src="app.js"></script>
+  <script src="auth.js"></script>
 </body>
 </html>
