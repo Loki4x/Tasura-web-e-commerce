@@ -9,12 +9,36 @@ Website toko online statis (HTML, CSS, JavaScript). Tidak perlu server atau data
 - **Akun pelanggan** (Supabase): daftar/masuk dengan email atau Google, lupa password,
   profil (alamat tersimpan & otomatis terisi saat checkout), riwayat & status pesanan
 
+## Dashboard Admin (`/admin.html`)
+- **Ringkasan**: pendapatan bulan ini, pesanan yang perlu dikonfirmasi/dikirim, stok menipis
+- **Pesanan**: semua pesanan (termasuk tamu), ubah status, isi no. resi, catatan internal,
+  chat pelanggan via WhatsApp. Status *Dibatalkan* otomatis mengembalikan stok & kuota kupon.
+  Ada notifikasi otomatis saat pesanan baru masuk.
+- **Produk**: tambah/edit/hapus, upload foto, stok, harga coret, spesifikasi, aktif/nonaktif
+- **Kupon Diskon**: persen atau nominal, maks. potongan, min. belanja, kuota, tanggal berakhir
+- **Pelanggan**: daftar akun, jumlah pesanan, total belanja
+- **Pengaturan**: nomor WhatsApp toko & teks pengumuman
+
+### Mengaktifkan dashboard admin
+1. Supabase → **SQL Editor → New query** → tempel isi `supabase/002_admin.sql` → **Run**
+   (jalankan setelah `schema.sql`; produk contoh & kupon `TASURA10` ikut dibuat).
+2. Login sekali ke website dengan akun yang akan jadi admin.
+3. Jalankan di SQL Editor (ganti email):
+   ```sql
+   insert into public.admins (user_id)
+   select id from auth.users where email = 'email-kamu@gmail.com'
+   on conflict do nothing;
+   ```
+4. Buka `https://tasura-web.vercel.app/admin.html`.
+
+Setelah ini produk, harga, stok, kupon, dan nomor WhatsApp dikelola dari dashboard
+(bukan lagi dari `products.js`, yang kini hanya data cadangan).
+
 ## Cara menjalankan
 Buka `index.html` di browser.
 
 ## Cara mengubah
-- **Nomor WhatsApp & kode promo**: edit `STORE` di `products.js`
-- **Produk**: edit `PRODUCTS` di `products.js` (nama, harga, kategori, deskripsi)
+- **Produk, kupon, nomor WhatsApp**: lewat Dashboard Admin (lihat di atas)
 - **Foto produk**: simpan foto ke folder `img/`, lalu isi `gambar: "img/namafile.jpg"`
 - **Teks landing page** (hero, FAQ, testimoni, alamat di footer): edit langsung di `index.html`
 - **Produk Paling Populer**: otomatis 4 produk dengan `terjual` terbanyak

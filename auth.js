@@ -1,10 +1,7 @@
 // ====== AKUN & LOGIN (Supabase) ======
 const Auth = (() => {
-  const configured = window.supabase && SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.includes("YOUR-PROJECT");
-  const db = configured ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey) : null;
   const siteUrl = location.origin + location.pathname;
   const $ = s => document.querySelector(s);
-  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const state = { user: null, profile: null };
   let mode = "login";
 
@@ -70,14 +67,18 @@ const Auth = (() => {
     state.profile = data || { id: state.user.id, nama: state.user.user_metadata?.full_name || "" };
   }
 
-  async function saveOrder(order) {
-    if (!db || !state.user) return null;
-    const { data, error } = await db.from("orders").insert(order).select("id").single();
-    if (error) { console.error(error); return null; }
-    // simpan data pengiriman ke profil agar checkout berikutnya otomatis terisi
-    await db.from("profiles").upsert({ id: state.user.id, nama: order.nama, hp: order.hp, alamat: order.alamat, updated_at: new Date().toISOString() });
-    Object.assign(state.profile, { nama: order.nama, hp: order.hp, alamat: order.alamat });
-    return data.id;
+  // Simpan data pengiriman ke profil agar checkout berikutnya otomatis terisi
+  async function saveProfile(f) {
+    if (!db || !state.user) return;
+    const upd = { id: state.user.id, nama: f.nama, hp: f.hp, alamat: f.alamat, updated_at: new Date().toISOString() };
+    const { error } = await db.from("profiles").upsert(upd);
+    if (!error) Object.assign(state.profile, upd);
+  }
+
+  async function checkAdmin() {
+    state.isAdmin = false;
+    if (state.user) { const { data } = await db.rpc("is_admin"); state.isAdmin = data === true; }
+    $("#adminLink").hidden = !state.isAdmin;
   }
 
   function prefill(form) {
@@ -104,16 +105,17 @@ const Auth = (() => {
   async function loadOrders() {
     const box = $("#ordersList");
     box.innerHTML = `<p class="muted">Memuat pesanan...</p>`;
-    const { data, error } = await db.from("orders").select("*").order("created_at", { ascending: false });
+    const { data, error } = await db.from("orders").select("*").eq("user_id", state.user.id).order("created_at", { ascending: false });
     if (error) { box.innerHTML = `<p class="msg error">Gagal memuat pesanan.</p>`; return; }
     if (!data.length) { box.innerHTML = `<div class="cart-empty">📦<br/>Belum ada pesanan</div>`; return; }
-    const rp = n => "Rp" + n.toLocaleString("id-ID");
     box.innerHTML = data.map(o => `
       <div class="order">
         <div class="row"><b>#TSR-${o.id}</b><span class="status s-${esc(o.status.split(" ")[0].toLowerCase())}">${esc(o.status)}</span></div>
         <span class="muted">${new Date(o.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })} • ${esc(o.pembayaran)}</span>
-        <ul>${o.items.map(i => `<li>${esc(i.nama)} ×${i.qty}<span>${rp(i.harga * i.qty)}</span></li>`).join("")}</ul>
-        <div class="row"><span>Total</span><b>${rp(o.total)}</b></div>
+        <ul>${o.items.map(i => `<li>${esc(i.nama)} ×${i.qty}<span>${rupiah(i.harga * i.qty)}</span></li>`).join("")}</ul>
+        ${o.diskon ? `<div class="row muted"><span>Diskon ${esc(o.promo || "")}</span><span>-${rupiah(o.diskon)}</span></div>` : ""}
+        <div class="row"><span>Total</span><b>${rupiah(o.total)}</b></div>
+        ${o.resi ? `<div class="row muted"><span>No. Resi</span><b>${esc(o.resi)}</b></div>` : ""}
       </div>`).join("");
   }
 
@@ -192,12 +194,12 @@ const Auth = (() => {
       state.user = session?.user || null;
       // jalankan di luar callback agar tidak deadlock dengan client Supabase
       setTimeout(async () => {
-        await loadProfile(); renderAccountBtn();
+        await loadProfile(); renderAccountBtn(); await checkAdmin();
         if (event === "PASSWORD_RECOVERY") openAuth("newpass");
       }, 0);
     });
   }
 
   init();
-  return { state, saveOrder, prefill, openAuth, get loggedIn() { return !!state.user; } };
+  return { state, saveProfile, prefill, openAuth, get loggedIn() { return !!state.user; } };
 })();

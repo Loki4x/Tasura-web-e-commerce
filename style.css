@@ -1,6 +1,7 @@
 /* ====== Tasura — tema hitam putih ====== */
 :root{--black:#0a0a0a;--dark:#111214;--text:#111;--muted:#6b7280;--soft:#9ca3af;--line:#e5e7eb;--bg:#fff;--gray:#f3f4f6;--gray-bg:#f8f9fa;--radius:18px;--shadow:0 10px 30px rgba(0,0,0,.08)}
 *{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth;scroll-padding-top:80px}
 body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
@@ -315,3 +316,17 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
   .faq summary{font-size:1rem}
   .btn-outline-lg{padding:16px 36px}
 }
+
+/* ====== Stok & checkout ====== */
+.stock{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 8px;border-radius:99px;margin-left:4px}
+.stock.low{background:#fff4e5;color:#9a5b00}
+.stock.out{background:#fdecec;color:#b42318}
+.card.soldout .thumb{opacity:.55}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.promo-msg{font-size:.82rem;font-weight:600;margin-top:-6px}
+.promo-msg.ok{color:#1f6b3a}.promo-msg.bad{color:#b42318}
+.promo-msg[hidden]{display:none}
+.summary{display:grid;gap:6px;background:var(--gray-bg);border-radius:12px;padding:12px 14px;font-size:.92rem}
+.summary .total-row{border-top:1px solid var(--line);padding-top:8px;font-size:1rem}
+.summary [hidden]{display:none}
+#checkoutError[hidden]{display:none}

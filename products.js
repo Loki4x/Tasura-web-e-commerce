@@ -1,4 +1,9 @@
-// ====== PENGATURAN TOKO — ubah sesuai kebutuhanmu ======
+// ====== DATA CADANGAN ======
+// Jika Supabase sudah tersambung, produk, nomor WhatsApp, dan kupon diambil dari database
+// dan dikelola lewat Dashboard Admin (admin.html). Data di file ini hanya dipakai jika
+// Supabase belum diatur atau sedang tidak bisa dihubungi.
+
+// ====== PENGATURAN TOKO ======
 const STORE = {
   nama: "Tasura",
   whatsapp: "6281234567890", // Ganti dengan nomor WA kamu (format 62xxx, tanpa + atau 0)
@@ -8,7 +13,7 @@ const STORE = {
 // ====== DAFTAR PRODUK ======
 // gambar: isi dengan path foto (mis. "img/rtx4060.jpg"). Jika kosong, emoji yang ditampilkan.
 // spek: daftar spesifikasi singkat yang tampil di halaman detail produk.
-const PRODUCTS = [
+let PRODUCTS = [
   { id: 1, nama: "PC Gaming Ryzen 5 7500F + RTX 4060", kategori: "PC Rakitan", harga: 12499000, hargaCoret: 13299000, rating: 4.9, terjual: 86, emoji: "🖥️", gambar: "",
     deskripsi: "PC rakitan siap main game AAA di 1080p ultra dan 1440p high. Sudah dirakit rapi, cable management bersih, dan dites stress test sebelum dikirim.",
     spek: ["Processor AMD Ryzen 5 7500F (6C/12T)", "VGA GeForce RTX 4060 8GB", "RAM 16GB DDR5 5600MHz", "SSD NVMe Gen4 1TB", "Motherboard B650M", "PSU 650W 80+ Bronze", "Casing mATX ARGB"] },

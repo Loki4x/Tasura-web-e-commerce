@@ -13,7 +13,7 @@
 <body>
   <!-- Announcement bar -->
   <div class="announce" id="announce">
-    <p>🎁 Daftar akun Tasura &amp; nikmati checkout lebih cepat, riwayat pesanan, serta promo khusus member. <a href="#" id="announceCta">Daftar Sekarang</a></p>
+    <p><span id="announceText">🎁 Daftar akun Tasura &amp; nikmati checkout lebih cepat, riwayat pesanan, serta promo khusus member.</span> <a href="#" id="announceCta">Daftar Sekarang</a></p>
     <button class="announce-close" id="announceClose" aria-label="Tutup">✕</button>
   </div>
 
@@ -260,8 +260,15 @@
           <option>Transfer Bank</option><option>E-Wallet (OVO/DANA/GoPay)</option><option>COD</option>
         </select>
       </label>
-      <label>Kode Promo (opsional)<input name="promo" placeholder="TASURA10" /></label>
-      <div class="row"><span>Total</span><b id="modalTotal">Rp0</b></div>
+      <label>Catatan untuk Penjual (opsional)<textarea name="catatan" rows="2" placeholder="Contoh: tolong cek kompatibilitas dengan PSU saya"></textarea></label>
+      <label>Kode Promo (opsional)<input name="promo" placeholder="TASURA10" autocomplete="off" /></label>
+      <p class="promo-msg" id="promoMsg" hidden></p>
+      <div class="summary">
+        <div class="row"><span>Subtotal</span><span id="modalSubtotal">Rp0</span></div>
+        <div class="row" id="discountRow" hidden><span>Diskon</span><span id="modalDiscount">-Rp0</span></div>
+        <div class="row total-row"><span>Total</span><b id="modalTotal">Rp0</b></div>
+      </div>
+      <p class="msg error" id="checkoutError" hidden></p>
       <button class="btn btn-wa full" type="submit">Pesan via WhatsApp</button>
     </form>
   </div>
@@ -319,6 +326,7 @@
         <button class="btn btn-primary full" type="submit">Simpan Profil</button>
       </form>
       <div id="ordersList" class="orders" hidden></div>
+      <a href="admin.html" class="btn btn-primary full" id="adminLink" hidden>⚙️ Dashboard Admin</a>
       <button type="button" class="btn btn-ghost full" id="logoutBtn">Keluar</button>
     </div>
   </div>
@@ -327,6 +335,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
+  <script src="db.js"></script>
   <script src="products.js"></script>
   <script src="app.js"></script>
   <script src="auth.js"></script>

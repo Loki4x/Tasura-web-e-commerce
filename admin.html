@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Dashboard Admin — Tasura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin">
+
+  <!-- Gerbang: belum login / bukan admin / Supabase belum diatur -->
+  <section class="gate" id="gate">
+    <div class="gate-box">
+      <a href="index.html" class="logo">Tasura <span class="tag">Admin</span></a>
+      <div id="gateBody"><p class="muted">Memuat...</p></div>
+    </div>
+  </section>
+
+  <!-- Aplikasi admin -->
+  <div class="admin-app" id="app" hidden>
+    <aside class="sidebar">
+      <a href="index.html" class="logo">Tasura <span class="tag">Admin</span></a>
+      <nav class="side-nav" id="sideNav">
+        <button data-view="ringkasan" class="active"><span>📊</span>Ringkasan</button>
+        <button data-view="pesanan"><span>🧾</span>Pesanan <b class="nav-badge" id="newBadge" hidden>0</b></button>
+        <button data-view="produk"><span>🖥️</span>Produk</button>
+        <button data-view="kupon"><span>🏷️</span>Kupon Diskon</button>
+        <button data-view="pelanggan"><span>👥</span>Pelanggan</button>
+        <button data-view="pengaturan"><span>⚙️</span>Pengaturan</button>
+      </nav>
+      <div class="side-foot">
+        <a href="index.html" target="_blank" class="side-link">↗ Lihat Toko</a>
+        <span class="muted" id="adminEmail"></span>
+        <button class="btn btn-ghost full" id="logoutBtn">Keluar</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- RINGKASAN -->
+      <section class="view" data-view="ringkasan">
+        <header class="view-head">
+          <div><h1>Ringkasan</h1><p class="muted" id="todayText"></p></div>
+          <button class="btn btn-ghost sm" data-refresh>↻ Muat Ulang</button>
+        </header>
+        <div class="stats-grid" id="statCards"></div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head"><h3>Pesanan Terbaru</h3><button class="link" data-goto="pesanan">Lihat semua →</button></div>
+            <div id="recentOrders"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Stok Menipis</h3><button class="link" data-goto="produk">Kelola →</button></div>
+            <div id="lowStock"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESANAN -->
+      <section class="view" data-view="pesanan" hidden>
+        <header class="view-head">
+          <div><h1>Pesanan</h1><p class="muted">Klik pesanan untuk melihat detail, mengubah status, dan mengisi nomor resi.</p></div>
+          <button class="btn btn-ghost sm" data-refresh>↻ Muat Ulang</button>
+        </header>
+        <div class="toolbar">
+          <div class="chips" id="orderFilters"></div>
+          <input type="search" class="input" id="orderSearch" placeholder="Cari nama, no. HP, atau #TSR-..." />
+        </div>
+        <div class="panel table-wrap"><table class="table" id="ordersTable"></table></div>
+      </section>
+
+      <!-- PRODUK -->
+      <section class="view" data-view="produk" hidden>
+        <header class="view-head">
+          <div><h1>Produk</h1><p class="muted">Produk nonaktif tidak tampil di toko.</p></div>
+          <button class="btn btn-primary sm" id="addProductBtn">＋ Tambah Produk</button>
+        </header>
+        <div class="toolbar">
+          <select class="input" id="productCat"></select>
+          <input type="search" class="input" id="productSearch" placeholder="Cari produk..." />
+        </div>
+        <div class="panel table-wrap"><table class="table" id="productsTable"></table></div>
+      </section>
+
+      <!-- KUPON -->
+      <section class="view" data-view="kupon" hidden>
+        <header class="view-head">
+          <div><h1>Kupon Diskon</h1><p class="muted">Kode promo yang bisa dipakai pembeli saat checkout.</p></div>
+          <button class="btn btn-primary sm" id="addCouponBtn">＋ Buat Kupon</button>
+        </header>
+        <div class="panel table-wrap"><table class="table" id="couponsTable"></table></div>
+      </section>
+
+      <!-- PELANGGAN -->
+      <section class="view" data-view="pelanggan" hidden>
+        <header class="view-head">
+          <div><h1>Pelanggan</h1><p class="muted">Akun yang sudah mendaftar di toko.</p></div>
+        </header>
+        <div class="toolbar"><input type="search" class="input" id="customerSearch" placeholder="Cari nama, email, atau no. HP..." /></div>
+        <div class="panel table-wrap"><table class="table" id="customersTable"></table></div>
+      </section>
+
+      <!-- PENGATURAN -->
+      <section class="view" data-view="pengaturan" hidden>
+        <header class="view-head"><div><h1>Pengaturan Toko</h1></div></header>
+        <form class="panel form-panel" id="settingsForm">
+          <label>Nomor WhatsApp Toko
+            <input class="input" name="whatsapp" inputmode="numeric" placeholder="6281234567890" required />
+            <small class="muted">Format internasional tanpa + atau 0 di depan, contoh 6281234567890. Pesanan dikirim ke nomor ini.</small>
+          </label>
+          <label>Teks Pengumuman (bar hitam paling atas)
+            <textarea class="input" name="pengumuman" rows="2"></textarea>
+          </label>
+          <button class="btn btn-primary" type="submit">Simpan Pengaturan</button>
+        </form>
+        <div class="panel form-panel">
+          <h3>Menambah Admin Lain</h3>
+          <p class="muted">Minta orangnya login ke toko sekali, lalu jalankan perintah ini di Supabase → SQL Editor (ganti emailnya):</p>
+          <pre class="code">insert into public.admins (user_id)
+select id from auth.users where email = 'email-admin@gmail.com'
+on conflict do nothing;</pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal detail pesanan -->
+  <div class="modal" id="orderModal"><div class="modal-box wide" id="orderBox"></div></div>
+
+  <!-- Modal produk -->
+  <div class="modal" id="productModal">
+    <form class="modal-box wide" id="productForm">
+      <div class="drawer-head"><h3 id="productTitle">Tambah Produk</h3><button type="button" class="icon-btn" data-close-modal>✕</button></div>
+      <div class="form-cols">
+        <div class="form-grid">
+          <label>Nama Produk<input class="input" name="nama" required maxlength="150" /></label>
+          <label>Kategori<input class="input" name="kategori" list="catList" required placeholder="Contoh: VGA" /></label>
+          <datalist id="catList"></datalist>
+          <div class="row-2">
+            <label>Harga Jual (Rp)<input class="input" name="harga" type="number" min="0" required /></label>
+            <label>Harga Coret (Rp)<input class="input" name="harga_coret" type="number" min="0" placeholder="Kosongkan jika tidak diskon" /></label>
+          </div>
+          <div class="row-2">
+            <label>Stok<input class="input" name="stok" type="number" min="0" required value="0" /></label>
+            <label>Urutan Tampil<input class="input" name="urutan" type="number" value="0" /></label>
+          </div>
+          <div class="row-2">
+            <label>Rating (0–5)<input class="input" name="rating" type="number" min="0" max="5" step="0.1" value="5" /></label>
+            <label>Terjual<input class="input" name="terjual" type="number" min="0" value="0" /></label>
+          </div>
+          <label class="check"><input type="checkbox" name="aktif" checked /> Tampilkan di toko (aktif)</label>
+        </div>
+        <div class="form-grid">
+          <label>Foto Produk</label>
+          <div class="img-pick">
+            <div class="img-preview" id="imgPreview">📦</div>
+            <div class="img-actions">
+              <label class="btn btn-ghost sm file-btn">Upload Foto<input type="file" id="imgFile" accept="image/*" hidden /></label>
+              <button type="button" class="link" id="imgRemove">Hapus foto</button>
+              <small class="muted">JPG/PNG/WebP, maks. 2 MB. Rasio 1:1 paling bagus.</small>
+            </div>
+          </div>
+          <input type="hidden" name="gambar" />
+          <label>Emoji (jika belum ada foto)<input class="input" name="emoji" maxlength="8" value="📦" /></label>
+          <label>Deskripsi<textarea class="input" name="deskripsi" rows="3"></textarea></label>
+          <label>Spesifikasi (satu baris = satu poin)<textarea class="input" name="spek" rows="5" placeholder="Memori 8GB GDDR6&#10;Konektor daya 1× 8-pin"></textarea></label>
+        </div>
+      </div>
+      <p class="msg error" id="productError" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan Produk</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal kupon -->
+  <div class="modal" id="couponModal">
+    <form class="modal-box" id="couponForm">
+      <div class="drawer-head"><h3 id="couponTitle">Buat Kupon</h3><button type="button" class="icon-btn" data-close-modal>✕</button></div>
+      <div class="form-grid">
+        <label>Kode Kupon<input class="input upper" name="kode" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_-]+" placeholder="HEMAT50K" /></label>
+        <div class="row-2">
+          <label>Jenis Potongan
+            <select class="input" name="tipe"><option value="persen">Persen (%)</option><option value="nominal">Nominal (Rp)</option></select>
+          </label>
+          <label><span id="nilaiLabel">Besar Potongan (%)</span><input class="input" name="nilai" type="number" min="1" required /></label>
+        </div>
+        <label id="maksWrap">Maksimal Potongan (Rp, opsional)<input class="input" name="maks_diskon" type="number" min="1" /></label>
+        <div class="row-2">
+          <label>Minimal Belanja (Rp)<input class="input" name="min_belanja" type="number" min="0" value="0" /></label>
+          <label>Kuota Pemakaian<input class="input" name="kuota" type="number" min="1" placeholder="Tanpa batas" /></label>
+        </div>
+        <label>Berlaku Sampai<input class="input" name="berlaku_sampai" type="date" /><small class="muted">Kosongkan jika tanpa batas waktu.</small></label>
+        <label class="check"><input type="checkbox" name="aktif" checked /> Aktif</label>
+      </div>
+      <p class="msg error" id="couponError" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan Kupon</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="db.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
