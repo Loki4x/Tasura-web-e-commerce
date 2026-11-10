@@ -15,7 +15,7 @@ function renderCategories() {
 function renderProducts() {
   let list = PRODUCTS.filter(p =>
     (activeCat === "Semua" || p.kategori === activeCat) &&
-    p.nama.toLowerCase().includes(query.toLowerCase()));
+    [p.nama, p.kategori, ...(p.spek || [])].join(" ").toLowerCase().includes(query.toLowerCase()));
   if (sort === "low") list.sort((a, b) => a.harga - b.harga);
   if (sort === "high") list.sort((a, b) => b.harga - a.harga);
   if (sort === "rating") list.sort((a, b) => b.rating - a.rating);
@@ -44,6 +44,7 @@ function showDetail(id) {
       <span class="meta">⭐ ${p.rating} • ${p.terjual} terjual</span>
       <div class="price"><b style="font-size:1.5rem">${rupiah(p.harga)}</b>${p.hargaCoret ? `<s>${rupiah(p.hargaCoret)}</s>` : ""}</div>
       <p>${p.deskripsi}</p>
+      ${p.spek?.length ? `<div class="spec"><b>Spesifikasi</b><ul>${p.spek.map(x => `<li>${x}</li>`).join("")}</ul></div>` : ""}
       <button class="btn btn-primary" data-add="${p.id}">+ Tambah ke Keranjang</button>
       <a class="btn btn-wa" target="_blank" href="https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(`Halo ${STORE.nama}, saya tertarik dengan produk *${p.nama}* (${rupiah(p.harga)}). Apakah masih tersedia?`)}">Tanya via WhatsApp</a>
     </div>`;
@@ -172,7 +173,7 @@ function renderPopular() {
 // ====== Menu Koleksi (kategori) ======
 function renderNavCategories() {
   const cats = ["Semua", ...new Set(PRODUCTS.map(p => p.kategori))];
-  $("#navCategories").innerHTML = cats.map(c => `<a data-navcat="${c}">${c === "Semua" ? "Semua Koleksi" : c}</a>`).join("");
+  $("#navCategories").innerHTML = cats.map(c => `<a data-navcat="${c}">${c === "Semua" ? "Semua Produk" : c}</a>`).join("");
 }
 document.addEventListener("click", e => {
   const a = e.target.closest("[data-navcat]");

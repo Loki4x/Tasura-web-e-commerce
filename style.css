@@ -224,6 +224,10 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 .detail-body{padding:28px;display:flex;flex-direction:column;gap:10px;position:relative}
 .detail-body .close{position:absolute;top:14px;right:14px}
 .detail-body p{color:var(--muted);font-size:.95rem}
+.spec{background:var(--gray-bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:.88rem}
+.spec ul{margin:6px 0 0 18px;display:grid;gap:3px;color:#374151}
+.detail{max-height:92vh}
+.detail-body{overflow:auto}
 .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,120px);background:var(--black);color:#fff;padding:12px 22px;border-radius:99px;z-index:200;transition:.3s;font-size:.9rem}
 .toast.show{transform:translate(-50%,0)}
 
