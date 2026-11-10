@@ -92,12 +92,13 @@ const closeCart = () => { $("#cartDrawer").classList.remove("open"); $("#overlay
 // ====== Kode promo ======
 // Dengan Supabase: dicek ke server (check_coupon). Tanpa Supabase: pakai STORE.promo di products.js.
 let promoState = { kode: "", diskon: 0, valid: false };
+let useDb = false; // true jika produk berhasil dimuat dari Supabase (002_admin.sql sudah dijalankan)
 let promoTimer;
 async function checkPromo(kode) {
   kode = kode.trim().toUpperCase();
   const sub = cartTotal();
   if (!kode) promoState = { kode: "", diskon: 0, valid: false, pesan: "" };
-  else if (db) {
+  else if (useDb) {
     const { data, error } = await db.rpc("check_coupon", { p_kode: kode, p_subtotal: sub });
     promoState = error ? { kode, diskon: 0, valid: false, pesan: "Gagal mengecek kode promo" }
       : { kode, diskon: data.valid ? data.diskon : 0, valid: data.valid, pesan: data.valid ? `Kode ${data.kode} dipakai ✓` : data.pesan };
@@ -180,7 +181,7 @@ $("#checkoutForm").onsubmit = async e => {
   btn.disabled = true; btn.textContent = "Memproses pesanan...";
   try {
     let order;
-    if (db) {
+    if (useDb) {
       const { data, error } = await db.rpc("place_order", {
         p_items: cart.map(i => ({ id: i.id, qty: i.qty })), p_nama: f.nama, p_hp: f.hp, p_alamat: f.alamat,
         p_pembayaran: f.bayar, p_promo: f.promo || null, p_catatan: f.catatan || null,
@@ -197,7 +198,7 @@ $("#checkoutForm").onsubmit = async e => {
     cart = []; saveCart(); form.reset(); promoState = { kode: "", diskon: 0, valid: false };
     $("#checkoutModal").classList.remove("show");
     toast(order.id ? `Pesanan #TSR-${order.id} dibuat 🎉` : "Pesanan dikirim ke WhatsApp 🎉");
-    if (db) loadStore(); // perbarui stok
+    if (useDb) loadStore(); // perbarui stok
   } catch (ex) {
     waTab?.close();
     err.textContent = ex.message.replace(/^.*?ERROR:\s*/, "");
@@ -283,6 +284,7 @@ async function loadStore() {
   ]);
   if (prod.error) { console.warn("Gagal memuat produk dari Supabase, memakai data cadangan", prod.error); return renderAll(); }
   PRODUCTS = prod.data.map(fromDbProduct);
+  useDb = true;
   const cfg = Object.fromEntries((set.data || []).map(r => [r.key, r.value]));
   if (cfg.whatsapp) { STORE.whatsapp = cfg.whatsapp; setWaLinks(); }
   if (cfg.pengumuman) $("#announceText").textContent = cfg.pengumuman;
