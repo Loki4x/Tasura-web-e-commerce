@@ -26,7 +26,7 @@ function renderProducts() {
       <div class="card-body">
         <span class="cat">${p.kategori}</span>
         <h3 data-detail="${p.id}">${p.nama}</h3>
-        <span class="meta">⭐ ${p.rating} • ${p.terjual} terjual</span>
+        <span class="meta">★ ${p.rating} • ${p.terjual} terjual</span>
         <div class="price"><b>${rupiah(p.harga)}</b>${p.hargaCoret ? `<s>${rupiah(p.hargaCoret)}</s>` : ""}</div>
         <button class="btn btn-primary add" data-add="${p.id}">+ Keranjang</button>
       </div>
@@ -41,7 +41,7 @@ function showDetail(id) {
       <button class="icon-btn close" data-close>✕</button>
       <span class="cat">${p.kategori}</span>
       <h2 style="font-size:1.5rem">${p.nama}</h2>
-      <span class="meta">⭐ ${p.rating} • ${p.terjual} terjual</span>
+      <span class="meta">★ ${p.rating} • ${p.terjual} terjual</span>
       <div class="price"><b style="font-size:1.5rem">${rupiah(p.harga)}</b>${p.hargaCoret ? `<s>${rupiah(p.hargaCoret)}</s>` : ""}</div>
       <p>${p.deskripsi}</p>
       <button class="btn btn-primary" data-add="${p.id}">+ Tambah ke Keranjang</button>
