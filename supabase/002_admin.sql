@@ -30,7 +30,7 @@ drop policy if exists "Admin kelola pengaturan" on public.settings;
 create policy "Admin kelola pengaturan" on public.settings for all using (public.is_admin()) with check (public.is_admin());
 
 insert into public.settings (key, value) values
-  ('whatsapp', '6281234567890'),
+  ('whatsapp', '6287779242830'),
   ('pengumuman', '🎁 Daftar akun Tasura & nikmati checkout lebih cepat, riwayat pesanan, serta promo khusus member.')
 on conflict (key) do nothing;
 

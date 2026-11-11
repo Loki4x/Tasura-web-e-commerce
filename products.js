@@ -6,7 +6,7 @@
 // ====== PENGATURAN TOKO ======
 const STORE = {
   nama: "Tasura",
-  whatsapp: "6281234567890", // Ganti dengan nomor WA kamu (format 62xxx, tanpa + atau 0)
+  whatsapp: "6287779242830", // Nomor WA toko (format 62xxx, tanpa + atau 0)
   promo: { kode: "TASURA10", diskon: 0.10 },
 };
 
