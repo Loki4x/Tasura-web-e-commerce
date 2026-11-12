@@ -98,3 +98,18 @@
 .sum-row.is-own em{font-style:normal;font-weight:700}
 .checks-list .own{color:#4b5563}.checks-list .own span{background:var(--gray);font-size:.65rem}
 .builder-hero p b{color:#fff}
+
+/* Rakitan rekomendasi */
+.presets-wrap{padding-top:40px}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.preset{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:8px;transition:.2s}
+.preset:hover{box-shadow:var(--shadow);transform:translateY(-3px)}
+.preset-label{align-self:flex-start;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;background:var(--black);color:#fff;padding:3px 10px;border-radius:99px}
+.preset h3{font-size:1.15rem}
+.preset p{font-size:.88rem}
+.preset ul{list-style:none;display:grid;gap:4px;font-size:.84rem;margin:4px 0}
+.preset li{display:flex;gap:8px}
+.preset-warn{font-size:.8rem;color:#b42318!important}
+.preset-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.preset-foot b{display:block;font-size:1.25rem;font-weight:800}
+.builder{padding-top:24px}

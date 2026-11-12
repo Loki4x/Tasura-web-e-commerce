@@ -330,4 +330,54 @@ function toast(msg) {
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 2000);
 }
 
-(async () => { await loadProducts(); loadBuild(); render(); })();
+// ---------- Rakitan rekomendasi ----------
+// Cadangan jika tabel build_presets belum ada (komponen dicari berdasarkan nama produk)
+const FALLBACK_PRESETS = [
+  { nama: "Gaming 1080p", label: "Gaming", deskripsi: "Main game AAA lancar di 1080p ultra. Pilihan paling seimbang untuk gamer.",
+    parts: { processor: "AMD Ryzen 5 7500F", motherboard: "Motherboard B650M WiFi", ram: "RAM DDR5 16GB (2×8GB) 5600MHz", vga: "VGA GeForce RTX 4060 8GB", storage: "SSD NVMe M.2 1TB Gen4", psu: "PSU 650W 80+ Bronze", casing: "Casing mATX Tempered Glass ARGB" } },
+  { nama: "Gaming & Streaming 1440p", label: "Gaming", deskripsi: "Rata kanan di 1440p, kuat untuk streaming dan editing video.",
+    parts: { processor: "AMD Ryzen 7 7700", motherboard: "Motherboard X670E ATX WiFi", ram: "RAM DDR5 32GB (2×16GB) 6000MHz", vga: "VGA GeForce RTX 4070 Super 12GB", storage: "SSD NVMe M.2 1TB Gen4", psu: "PSU 850W 80+ Gold Full Modular", casing: "Casing ATX Mid Tower Airflow", cooler: "CPU Cooler Tower 4 Heatpipe ARGB" } },
+  { nama: "Kantor & Sekolah", label: "Kantor", deskripsi: "Hemat, senyap, dan cepat untuk Office, browsing, dan meeting online. Tanpa VGA.",
+    parts: { processor: "Intel Core i5-13400", motherboard: "Motherboard B760M DDR4", ram: "RAM DDR4 16GB (2×8GB) 3200MHz", storage: "SSD NVMe M.2 512GB Gen3", psu: "PSU 650W 80+ Bronze", casing: "Casing mATX Tempered Glass ARGB" } },
+];
+let presets = [];
+async function loadPresets() {
+  if (db) {
+    const { data, error } = await db.from("build_presets").select("*").eq("aktif", true).order("urutan").order("id");
+    if (!error) { presets = data || []; return; }
+  }
+  presets = FALLBACK_PRESETS.map(p => ({ ...p, komponen: Object.fromEntries(Object.entries(p.parts)
+    .map(([k, nama]) => [k, PRODUCTS.find(x => x.nama === nama)]).filter(([, x]) => x).map(([k, x]) => [k, [x.id, 1]])) }));
+}
+// Komponen preset yang masih dijual
+const presetParts = pr => SLOTS.filter(s => Array.isArray(pr.komponen?.[s.key]) && byId(+pr.komponen[s.key][0]))
+  .map(s => ({ s, p: byId(+pr.komponen[s.key][0]), qty: +pr.komponen[s.key][1] || 1 }));
+function renderPresets() {
+  const list = presets.map(pr => ({ pr, parts: presetParts(pr) })).filter(x => x.parts.length);
+  $("#presetsWrap").hidden = !list.length;
+  $("#presetList").innerHTML = list.map(({ pr, parts }, i) => {
+    const total = parts.reduce((t, x) => t + x.p.harga * x.qty, 0);
+    const out = parts.filter(x => habis(x.p));
+    return `<article class="preset">
+      ${pr.label ? `<span class="preset-label">${esc(pr.label)}</span>` : ""}
+      <h3>${esc(pr.nama)}</h3>
+      <p class="muted">${esc(pr.deskripsi || "")}</p>
+      <ul>${parts.map(x => `<li><span>${x.s.icon}</span>${esc(x.p.nama)}${x.qty > 1 ? ` ×${x.qty}` : ""}</li>`).join("")}</ul>
+      ${out.length ? `<p class="preset-warn">Stok habis: ${out.map(x => esc(x.p.nama)).join(", ")}</p>` : ""}
+      <div class="preset-foot"><div><small class="muted">Mulai dari</small><b>${rupiah(total)}</b></div>
+        <button class="btn btn-primary sm" data-preset="${i}">Pakai Rakitan Ini</button></div>
+    </article>`;
+  }).join("");
+  $("#presetList").onclick = e => {
+    const b = e.target.closest("[data-preset]"); if (!b) return;
+    const { pr, parts } = list[+b.dataset.preset];
+    if (Object.keys(build).length && !confirm(`Ganti rakitanmu saat ini dengan "${pr.nama}"?`)) return;
+    build = {};
+    parts.forEach(x => { build[x.s.key] = { id: x.p.id, qty: x.qty }; });
+    save(); render();
+    toast(`✓ Rakitan "${pr.nama}" dipakai. Silakan ubah komponennya jika perlu.`);
+    $(".builder").scrollIntoView({ behavior: "smooth" });
+  };
+}
+
+(async () => { await loadProducts(); await loadPresets(); loadBuild(); render(); renderPresets(); })();

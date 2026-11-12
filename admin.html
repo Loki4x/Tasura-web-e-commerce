@@ -30,6 +30,7 @@
         <button data-view="pesanan"><span>🧾</span>Pesanan <b class="nav-badge" id="newBadge" hidden>0</b></button>
         <button data-view="produk"><span>🖥️</span>Produk</button>
         <button data-view="kupon"><span>🏷️</span>Kupon Diskon</button>
+        <button data-view="rakitan"><span>🧩</span>Rakitan</button>
         <button data-view="pelanggan"><span>👥</span>Pelanggan</button>
         <button data-view="pengaturan"><span>⚙️</span>Pengaturan</button>
       </nav>
@@ -93,6 +94,15 @@
           <button class="btn btn-primary sm" id="addCouponBtn">＋ Buat Kupon</button>
         </header>
         <div class="panel table-wrap"><table class="table" id="couponsTable"></table></div>
+      </section>
+
+      <!-- RAKITAN REKOMENDASI -->
+      <section class="view" data-view="rakitan" hidden>
+        <header class="view-head">
+          <div><h1>Rakitan Rekomendasi</h1><p class="muted">Paket rakitan yang tampil di atas halaman Rakit PC.</p></div>
+          <button class="btn btn-primary sm" id="addPresetBtn">＋ Buat Rakitan</button>
+        </header>
+        <div class="panel table-wrap"><table class="table" id="presetsTable"></table></div>
       </section>
 
       <!-- PELANGGAN -->
@@ -190,6 +200,32 @@ on conflict do nothing;</pre>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>Batal</button>
         <button type="submit" class="btn btn-primary">Simpan Produk</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal rakitan -->
+  <div class="modal" id="presetModal">
+    <form class="modal-box" id="presetForm">
+      <div class="drawer-head"><h3 id="presetTitle">Buat Rakitan</h3><button type="button" class="icon-btn" data-close-modal>✕</button></div>
+      <div class="form-grid">
+        <label>Nama Rakitan<input class="input" name="nama" required maxlength="80" placeholder="Gaming 1080p" /></label>
+        <div class="row-2">
+          <label>Label<input class="input" name="label" maxlength="20" placeholder="Gaming / Editing / Kantor" /></label>
+          <label>Urutan<input class="input" name="urutan" type="number" value="0" /></label>
+        </div>
+        <label>Deskripsi<textarea class="input" name="deskripsi" rows="2"></textarea></label>
+        <label>Link Rakitan
+          <input class="input" name="link" required placeholder="Tempel link dari tombol 'Salin link rakitan ini'" />
+          <small class="muted">Susun komponennya di <a class="link" href="rakit.html" target="_blank">halaman Rakit PC</a>, klik <b>Salin link rakitan ini</b>, lalu tempel di sini.</small>
+        </label>
+        <div id="presetParts" class="preset-parts"></div>
+        <label class="check"><input type="checkbox" name="aktif" checked /> Tampilkan di halaman Rakit PC</label>
+      </div>
+      <p class="msg error" id="presetError" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan Rakitan</button>
       </div>
     </form>
   </div>

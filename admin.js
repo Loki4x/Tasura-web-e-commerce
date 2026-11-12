@@ -75,6 +75,8 @@ async function onSession(session) {
 
 // ================== MUAT DATA ==================
 async function loadAll() {
+  const pr = await db.from("build_presets").select("*").order("urutan").order("id");
+  S.presets = pr.error ? null : pr.data;
   const [o, p, c, cu, st] = await Promise.all([
     db.from("orders").select("*").order("created_at", { ascending: false }).limit(1000),
     db.from("products").select("*").order("urutan").order("id"),
@@ -88,7 +90,7 @@ async function loadAll() {
   S.settings = Object.fromEntries((st.data || []).map(r => [r.key, r.value]));
   renderAllViews();
 }
-function renderAllViews() { renderSummary(); renderOrders(); renderProducts(); renderCoupons(); renderCustomers(); renderSettings(); updateBadge(); }
+function renderAllViews() { renderSummary(); renderOrders(); renderProducts(); renderCoupons(); renderPresets(); renderCustomers(); renderSettings(); updateBadge(); }
 
 function updateBadge() {
   const n = S.orders.filter(o => o.status === "Menunggu Konfirmasi").length;
@@ -497,6 +499,74 @@ $("#couponForm").onsubmit = async e => {
   }
   if (S.editing) Object.assign(S.editing, data); else S.coupons.unshift(data);
   renderCoupons(); closeModals(); toast("Kupon disimpan ✓");
+};
+
+// ================== RAKITAN REKOMENDASI ==================
+const SLOT_LABEL = { processor: "Processor", motherboard: "Motherboard", ram: "RAM", vga: "VGA", storage: "Storage", psu: "PSU", casing: "Casing", cooler: "Cooler" };
+const presetTotal = k => Object.values(k || {}).reduce((t, v) => t + ((S.products.find(p => p.id === +v[0])?.harga || 0) * (+v[1] || 1)), 0);
+function renderPresets() {
+  if (!S.presets) {
+    $("#presetsTable").innerHTML = `<tr><td class="empty-note">Jalankan <b>supabase/005_fitur_lanjutan.sql</b> untuk mengaktifkan fitur ini.</td></tr>`;
+    $("#addPresetBtn").disabled = true; return;
+  }
+  $("#presetsTable").innerHTML = `<thead><tr><th>Rakitan</th><th>Komponen</th><th>Total</th><th>Tampil</th><th></th></tr></thead><tbody>` +
+    (S.presets.length ? S.presets.map(r => `<tr class="${r.aktif ? "" : "inactive"}">
+      <td><b>${esc(r.nama)}</b>${r.label ? ` <span class="chip-mini">${esc(r.label)}</span>` : ""}<small>${esc(r.deskripsi || "")}</small></td>
+      <td><small>${Object.entries(r.komponen || {}).map(([k, v]) => `${SLOT_LABEL[k] || k}: ${esc(S.products.find(p => p.id === +v[0])?.nama || "⚠ produk dihapus")}`).join("<br>")}</small></td>
+      <td><b>${rupiah(presetTotal(r.komponen))}</b></td>
+      <td>${r.aktif ? "Ya" : "Tidak"}</td>
+      <td class="right"><a class="link" target="_blank" href="rakit.html?b=${encodeURIComponent(JSON.stringify(r.komponen))}">Buka</a> <button class="link" data-edit-preset="${r.id}">Edit</button> <button class="link danger" data-del-preset="${r.id}">Hapus</button></td>
+    </tr>`).join("") : `<tr><td colspan="5" class="empty-note">Belum ada rakitan rekomendasi.</td></tr>`) + "</tbody>";
+}
+function parseBuildLink(v) {
+  try {
+    const q = new URL(v.trim(), location.href).searchParams.get("b");
+    const o = JSON.parse(q);
+    const k = {};
+    Object.entries(o).forEach(([slot, val]) => { if (SLOT_LABEL[slot] && Array.isArray(val) && val[0] !== "c" && val[0] !== "o" && S.products.some(p => p.id === +val[0])) k[slot] = [+val[0], +val[1] || 1]; });
+    return Object.keys(k).length ? k : null;
+  } catch { return null; }
+}
+function showPresetParts() {
+  const k = parseBuildLink($("#presetForm").link.value);
+  $("#presetParts").innerHTML = k ? Object.entries(k).map(([s, v]) => `<div>${SLOT_LABEL[s]}: <b>${esc(S.products.find(p => p.id === v[0]).nama)}</b>${v[1] > 1 ? ` ×${v[1]}` : ""}</div>`).join("") + `<div class="preset-total">Total ${rupiah(presetTotal(k))}</div>`
+    : $("#presetForm").link.value ? `<div class="muted">Link belum terbaca. Pastikan menyalin dari tombol "Salin link rakitan ini" (komponen request/milik sendiri diabaikan).</div>` : "";
+}
+$("#presetForm").link.oninput = showPresetParts;
+function openPreset(id) {
+  const r = id ? S.presets.find(x => x.id === id) : null; S.editing = r;
+  const f = $("#presetForm"); f.reset(); $("#presetError").hidden = true;
+  $("#presetTitle").textContent = r ? "Edit Rakitan" : "Buat Rakitan";
+  if (r) {
+    ["nama", "label", "deskripsi", "urutan"].forEach(k => f[k].value = r[k] ?? "");
+    f.aktif.checked = r.aktif;
+    f.link.value = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}rakit.html?b=${encodeURIComponent(JSON.stringify(r.komponen))}`;
+  }
+  showPresetParts(); openModal("#presetModal");
+}
+$("#addPresetBtn").onclick = () => openPreset(null);
+$("#presetsTable").onclick = async e => {
+  const ed = e.target.closest("[data-edit-preset]"); if (ed) return openPreset(+ed.dataset.editPreset);
+  const del = e.target.closest("[data-del-preset]"); if (!del) return;
+  const r = S.presets.find(x => x.id === +del.dataset.delPreset);
+  if (!confirm(`Hapus rakitan "${r.nama}"?`)) return;
+  const { error } = await db.from("build_presets").delete().eq("id", r.id);
+  if (error) return toast("Gagal menghapus: " + error.message);
+  S.presets = S.presets.filter(x => x.id !== r.id); renderPresets(); toast("Rakitan dihapus");
+};
+$("#presetForm").onsubmit = async e => {
+  e.preventDefault();
+  const f = e.target, btn = f.querySelector("button[type=submit]");
+  const komponen = parseBuildLink(f.link.value);
+  if (!komponen) { $("#presetError").textContent = "Link rakitan tidak valid atau tidak berisi produk toko."; $("#presetError").hidden = false; return; }
+  const row = { nama: f.nama.value.trim(), label: f.label.value.trim() || null, deskripsi: f.deskripsi.value.trim() || null, urutan: num(f.urutan.value) ?? 0, aktif: f.aktif.checked, komponen };
+  busy(btn, true);
+  const q = S.editing ? db.from("build_presets").update(row).eq("id", S.editing.id) : db.from("build_presets").insert(row);
+  const { data, error } = await q.select().single();
+  busy(btn, false);
+  if (error) { $("#presetError").textContent = error.message; $("#presetError").hidden = false; return; }
+  if (S.editing) Object.assign(S.editing, data); else S.presets.push(data);
+  renderPresets(); closeModals(); toast("Rakitan disimpan ✓");
 };
 
 // ================== PELANGGAN ==================
