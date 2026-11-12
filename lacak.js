@@ -43,7 +43,7 @@ function render(o) {
         <a class="btn btn-wa" target="_blank" href="https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(`Halo ${STORE.nama}, saya mau tanya pesanan #TSR-${o.id} atas nama ${o.nama}.`)}">💬 Tanya Admin</a>
       </div>
     </div>`;
-  if (window.Pay) Pay.mount($("#payBox"), o, currentHp, refresh);
+  if (typeof Pay !== "undefined") Pay.mount($("#payBox"), o, currentHp, refresh);
   $("#copyResi")?.addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(o.resi); toast("Nomor resi disalin ✓"); } catch { prompt("Salin nomor resi:", o.resi); }
   });
@@ -72,6 +72,7 @@ $("#trackForm").onsubmit = e => { e.preventDefault(); const f = e.target; lookup
 
 (async () => {
   await loadSettings();
+  if (typeof Pay !== "undefined") await Pay.init().catch(() => {});
   const q = new URLSearchParams(location.search);
   const saved = JSON.parse(sessionStorage.getItem("tasura_track") || "null");
   const id = q.get("id") || saved?.id, hp = q.get("hp") || (saved && String(saved.id) === String(parseOrderId(q.get("id") || saved.id)) ? saved.hp : "");

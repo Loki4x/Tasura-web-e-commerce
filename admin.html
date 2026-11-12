@@ -115,6 +115,8 @@
           <label>Teks Pengumuman (bar hitam paling atas)
             <textarea class="input" name="pengumuman" rows="2"></textarea>
           </label>
+          <label class="check"><input type="checkbox" name="poketo_aktif" /> Aktifkan pembayaran online (Poketo: QRIS, VA, PayLater, kartu debit)</label>
+          <small class="muted">Aktifkan setelah Edge Function <b>poketo-checkout</b> & <b>poketo-webhook</b> di-deploy dan secret key Poketo diisi (lihat README).</small>
           <button class="btn btn-primary" type="submit">Simpan Pengaturan</button>
         </form>
         <div class="panel form-panel">

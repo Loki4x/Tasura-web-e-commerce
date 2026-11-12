@@ -197,7 +197,7 @@
       <details><summary>Bisa minta dirakitkan PC sesuai budget?</summary><p>Bisa banget. Chat kami via WhatsApp, sebutkan budget dan kebutuhanmu (gaming, editing, kantor). Kami bantu susun spesifikasi yang paling pas, gratis.</p></details>
       <details><summary>Bagaimana saya tahu komponen yang saya pilih kompatibel?</summary><p>Cek bagian Spesifikasi di setiap produk (socket, tipe RAM, daya). Kalau ragu, kirim daftar komponenmu ke WhatsApp dan kami cek kompatibilitasnya sebelum kamu checkout.</p></details>
       <details><summary>Apakah PC rakitan dites sebelum dikirim?</summary><p>Ya. Setiap PC rakitan diinstal driver, dites stress test dan benchmark, lalu dikirim dengan packing kayu agar aman selama perjalanan.</p></details>
-      <details><summary>Metode pembayaran apa saja yang tersedia?</summary><p>Transfer bank dan e-wallet (OVO, DANA, GoPay). Saat ini kami belum melayani COD (bayar di tempat).</p></details>
+      <details><summary>Metode pembayaran apa saja yang tersedia?</summary><p>Bayar online otomatis lewat QRIS, Virtual Account, PayLater, atau kartu debit, serta transfer bank dan e-wallet (OVO, DANA, GoPay). Saat ini kami belum melayani COD (bayar di tempat).</p></details>
       <details><summary>Bagaimana jika barang rusak atau tidak berfungsi saat diterima?</summary><p>Rekam video unboxing, lalu hubungi kami via WhatsApp maksimal 2×24 jam setelah barang diterima. Kami bantu tukar barang atau proses klaim garansinya.</p></details>
     </div>
   </section>
@@ -296,6 +296,7 @@
           <option>Transfer Bank</option><option>E-Wallet (OVO/DANA/GoPay)</option>
         </select>
       </label>
+      <p class="hint" id="payHint" hidden></p>
       <label>Catatan untuk Penjual (opsional)<textarea name="catatan" rows="2" placeholder="Contoh: tolong cek kompatibilitas dengan PSU saya"></textarea></label>
       <label>Kode Promo (opsional)<input name="promo" placeholder="TASURA10" autocomplete="off" /></label>
       <p class="promo-msg" id="promoMsg" hidden></p>
@@ -375,6 +376,7 @@
   <script src="db.js"></script>
   <script src="products.js"></script>
   <script src="map-picker.js"></script>
+  <script src="pay.js"></script>
   <script src="app.js"></script>
   <script src="auth.js"></script>
 </body>

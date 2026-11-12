@@ -173,6 +173,7 @@ $("#checkoutBtn").onclick = () => {
   const note = localStorage.getItem("tasura_checkout_note");
   if (note && !$("#checkoutForm").catatan.value) $("#checkoutForm").catatan.value = note;
   checkPromo($("#checkoutForm").promo.value);
+  syncPayOption();
   $("#checkoutModal").classList.add("show");
 };
 $("#closeModal").onclick = () => $("#checkoutModal").classList.remove("show");
@@ -182,6 +183,28 @@ $("#checkoutForm").promo.addEventListener("input", e => {
   clearTimeout(promoTimer);
   promoTimer = setTimeout(() => checkPromo(e.target.value), 450);
 });
+
+// ====== Pembayaran online (Poketo) ======
+const ONLINE = "Bayar Online (QRIS, VA, PayLater, Kartu Debit)";
+function syncPayOption() {
+  const sel = $("#checkoutForm").bayar;
+  let opt = [...sel.options].find(o => o.value === ONLINE);
+  if (!(useDb && typeof Pay !== "undefined" && Pay.enabled)) { opt?.remove(); $("#payHint").hidden = true; return; }
+  if (!opt) { opt = new Option(ONLINE, ONLINE); sel.add(opt, 0); }
+  const req = requestCount() > 0;
+  opt.disabled = req;
+  opt.textContent = req ? ONLINE + " — setelah harga request dikonfirmasi" : ONLINE;
+  if (req && sel.value === ONLINE) sel.value = "Transfer Bank";
+  if (!req && !sel.dataset.touched) sel.value = ONLINE;
+  updatePayHint();
+}
+function updatePayHint() {
+  const online = $("#checkoutForm").bayar.value === ONLINE;
+  $("#payHint").hidden = !online;
+  $("#payHint").textContent = "Setelah pesanan dibuat, halaman pembayaran Poketo akan terbuka. Bayar dengan QRIS, Virtual Account, PayLater, atau kartu debit — status lunas otomatis.";
+  $("#checkoutForm button[type=submit]").textContent = online ? "Buat Pesanan & Bayar" : "Pesan via WhatsApp";
+}
+$("#checkoutForm").bayar.addEventListener("change", e => { e.target.dataset.touched = "1"; updatePayHint(); });
 
 function waMessage(o, f) {
   const items = o.items.map((i, n) => i.custom
@@ -202,8 +225,9 @@ $("#checkoutForm").onsubmit = async e => {
   const form = e.target, btn = form.querySelector("button[type=submit]");
   const f = Object.fromEntries(new FormData(form));
   const err = $("#checkoutError"); err.hidden = true;
+  const online = f.bayar === ONLINE && useDb;
   // Buka tab WhatsApp lebih dulu agar tidak diblokir popup blocker, lalu isi alamatnya setelah pesanan tersimpan.
-  const waTab = window.open("", "_blank");
+  const waTab = online ? null : window.open("", "_blank");
   btn.disabled = true; btn.textContent = "Memproses pesanan...";
   try {
     let order;
@@ -227,6 +251,15 @@ $("#checkoutForm").onsubmit = async e => {
       order = { items: cart.map(i => i.custom ? { ...i, harga: 0 } : { ...findP(i.id), qty: i.qty }), subtotal: sub, diskon: promoState.diskon, promo: promoState.kode, total: sub - promoState.diskon };
     }
     const url = `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(waMessage(order, f))}`;
+    if (online) {
+      const track = `lacak.html?id=${order.id}&hp=${encodeURIComponent(f.hp)}`;
+      cart = []; saveCart(); localStorage.removeItem("tasura_checkout_note");
+      $("#checkoutModal").classList.remove("show");
+      toast(`Pesanan #TSR-${order.id} dibuat, membuka pembayaran...`);
+      try { await Pay.open(order.id, f.hp, () => { location.href = track; }); }
+      catch (ex) { alert(`Pesanan #TSR-${order.id} sudah dibuat, tetapi halaman pembayaran gagal dibuka: ${ex.message}\nKamu bisa membayar dari halaman Lacak Pesanan atau menghubungi admin.`); location.href = track; }
+      return;
+    }
     if (waTab) waTab.location.href = url; else location.href = url;
     cart = []; saveCart(); form.reset(); promoState = { kode: "", diskon: 0, valid: false };
     localStorage.removeItem("tasura_checkout_note");
@@ -239,7 +272,7 @@ $("#checkoutForm").onsubmit = async e => {
     err.textContent = ex.message.replace(/^.*?ERROR:\s*/, "");
     err.hidden = false;
   } finally {
-    btn.disabled = false; btn.textContent = "Pesan via WhatsApp";
+    btn.disabled = false; updatePayHint();
   }
 };
 
@@ -355,6 +388,7 @@ async function loadStore() {
   if (prod.error) { console.warn("Gagal memuat produk dari Supabase, memakai data cadangan", prod.error); return renderAll(); }
   PRODUCTS = prod.data.map(fromDbProduct);
   useDb = true;
+  if (typeof Pay !== "undefined") await Pay.init();
   const cfg = Object.fromEntries((set.data || []).map(r => [r.key, r.value]));
   if (cfg.whatsapp) { STORE.whatsapp = cfg.whatsapp; setWaLinks(); }
   if (cfg.pengumuman) $("#announceText").textContent = cfg.pengumuman;

@@ -165,7 +165,7 @@ function renderOrders() {
         <td>${esc(o.nama)}<small>${esc(o.hp)}${o.user_id ? "" : " • Tamu"}</small></td>
         <td>${o.items.length} item ${reqBadge(o)}<small>${esc(o.items[0]?.nama || "")}${o.items.length > 1 ? " +" + (o.items.length - 1) : ""}</small></td>
         <td><b>${rupiah(o.total)}</b>${o.promo ? `<small>${esc(o.promo)}</small>` : ""}</td>
-        <td>${esc(o.pembayaran)}</td>
+        <td>${esc(o.pembayaran)}${payBadge(o)}</td>
         <td>${badge(o.status)}${o.resi ? `<small>Resi ${esc(o.resi)}</small>` : ""}</td>
       </tr>`).join("") : `<tr><td colspan="6" class="empty-note">Tidak ada pesanan.</td></tr>`) + "</tbody>";
 }
@@ -175,6 +175,10 @@ document.addEventListener("click", e => {
   const r = e.target.closest("[data-order]"); if (r) openOrder(+r.dataset.order);
   const p = e.target.closest("[data-product]"); if (p && !e.target.closest("button,input,label")) openProduct(+p.dataset.product);
 });
+
+// ---- Status pembayaran ----
+const BAYAR = { belum: "Belum dibayar", menunggu: "Menunggu pembayaran", lunas: "Lunas", kedaluwarsa: "Tagihan kedaluwarsa", dibatalkan: "Tagihan dibatalkan", refund: "Refund" };
+const payBadge = o => o.bayar_status ? `<small><span class="pay-badge ${o.bayar_status === "lunas" ? "paid" : ""}">${o.bayar_status === "lunas" ? "✓ " : ""}${BAYAR[o.bayar_status] || o.bayar_status}</span></small>` : "";
 
 // ---- Komponen request (dari Rakit PC) ----
 const hasReq = o => o.items.some(i => i.custom);
@@ -200,7 +204,8 @@ function customerMsg(o) {
     "Menunggu Konfirmasi": hasReq(o)
       ? `${head}\nBerikut harga komponen request yang sudah kami carikan:\n` +
         o.items.filter(i => i.custom).map(i => `• ${i.slot ? i.slot + ": " : ""}${i.nama} x${i.qty} = ${i.harga ? rupiah(i.harga * i.qty) : "masih kami carikan"}`).join("\n") +
-        `\n\n*Total pesanan menjadi ${rupiah(o.total)}*. Jika setuju, mohon konfirmasi agar kami proses ya 🙏`
+        `\n\n*Total pesanan menjadi ${rupiah(o.total)}*. Jika setuju, mohon konfirmasi agar kami proses ya 🙏` +
+        (S.settings.poketo_aktif === "1" ? `\nBisa juga langsung bayar online di: ${location.origin}${location.pathname.replace(/[^/]*$/, "")}lacak.html?id=${o.id}` : "")
       : `${head}\nPesananmu sudah kami terima dan sedang kami cek ketersediaannya.`,
     "Diproses": `${head}\nPesanan sudah dikonfirmasi dan sedang kami siapkan. 🙏`,
     "Dikirim": `${head}\nPesananmu sudah dikirim! 🚚${o.resi ? `\nNo. resi: *${o.resi}*` : ""}`,
@@ -242,6 +247,10 @@ function openOrder(id) {
         <label>Status Pesanan
           <select class="input" name="status">${STATUSES.map(s => `<option ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}</select>
         </label>
+        ${o.bayar_status !== undefined ? `<label>Status Pembayaran
+          <select class="input" name="bayar_status">${Object.entries(BAYAR).map(([k, v]) => `<option value="${k}" ${k === o.bayar_status ? "selected" : ""}>${v}</option>`).join("")}</select>
+          ${o.bayar_invoice ? `<small class="muted">Tagihan Poketo: ${esc(o.bayar_invoice)}${o.bayar_metode ? ` • ${esc(o.bayar_metode)}` : ""}${o.dibayar_at ? ` • dibayar ${fmtDate(o.dibayar_at)}` : ""}</small>` : `<small class="muted">Ubah ke <b>Lunas</b> setelah transfer manual dicek.</small>`}
+        </label>` : ""}
         <label>No. Resi Pengiriman<input class="input" name="resi" value="${esc(o.resi || "")}" placeholder="Contoh: JNE1234567890" /></label>
         <label>Catatan Internal<textarea class="input" name="catatan_admin" rows="3" placeholder="Hanya terlihat oleh admin">${esc(o.catatan_admin || "")}</textarea></label>
         <small class="muted">Status <b>Dibatalkan</b> otomatis mengembalikan stok produk dan kuota kupon.</small>
@@ -265,6 +274,10 @@ function openOrder(id) {
     const prevStatus = o.status;
     const upd = { status: form.status.value, resi: form.resi.value.trim() || null, catatan_admin: form.catatan_admin.value.trim() || null,
       ...(hasReq(o) ? repriced(o, form) : {}) };
+    if (form.bayar_status) {
+      upd.bayar_status = form.bayar_status.value;
+      if (upd.bayar_status === "lunas" && o.bayar_status !== "lunas") { upd.dibayar_at = new Date().toISOString(); if (!o.bayar_metode) upd.bayar_metode = "manual"; }
+    }
     const { data, error } = await db.from("orders").update(upd).eq("id", o.id).select().single();
     busy(btn, false);
     if (error) return toast("Gagal menyimpan: " + error.message);
@@ -511,6 +524,7 @@ function renderSettings() {
   const f = $("#settingsForm");
   f.whatsapp.value = S.settings.whatsapp || "";
   f.pengumuman.value = S.settings.pengumuman || "";
+  f.poketo_aktif.checked = S.settings.poketo_aktif === "1";
 }
 $("#settingsForm").onsubmit = async e => {
   e.preventDefault();
@@ -518,10 +532,11 @@ $("#settingsForm").onsubmit = async e => {
   const wa = toWa(f.whatsapp.value);
   if (wa.length < 10) return toast("Nomor WhatsApp tidak valid");
   busy(btn, true);
-  const { error } = await db.from("settings").upsert([{ key: "whatsapp", value: wa }, { key: "pengumuman", value: f.pengumuman.value.trim() }]);
+  const rows = [{ key: "whatsapp", value: wa }, { key: "pengumuman", value: f.pengumuman.value.trim() }, { key: "poketo_aktif", value: f.poketo_aktif.checked ? "1" : "0" }];
+  const { error } = await db.from("settings").upsert(rows);
   busy(btn, false);
   if (error) return toast("Gagal menyimpan: " + error.message);
-  S.settings.whatsapp = wa; S.settings.pengumuman = f.pengumuman.value.trim(); renderSettings();
+  rows.forEach(r => S.settings[r.key] = r.value); renderSettings();
   toast("Pengaturan disimpan ✓");
 };
 

@@ -96,3 +96,25 @@ pelanggan akan melihat statusnya di menu **Akun Saya → Pesanan Saya**.
 
 > Catatan: login harus dicoba lewat `http://` / `https://` (GitHub Pages atau server lokal seperti
 > VS Code Live Server), bukan dengan membuka file `index.html` langsung (`file://`), terutama untuk login Google.
+
+## Pembayaran Online (Poketo)
+
+Pembeli bisa membayar dengan QRIS, Virtual Account, PayLater, atau kartu debit. Tagihan dibuat oleh
+Supabase Edge Function (secret key tidak pernah ada di website) dan status **Lunas** hanya diubah oleh
+webhook Poketo yang tanda tangannya sudah diverifikasi.
+
+1. Jalankan `supabase/005_fitur_lanjutan.sql` di SQL Editor (jika belum).
+2. Di **Poketo** (poketo.id) → Merchant → Pengaturan API: buat API key sandbox (`sk_test_…`).
+3. Di **Supabase → Edge Functions**, buat 2 fungsi (Deploy a new function → Via Editor), tempel isi file:
+   - `poketo-checkout` ← `supabase/functions/poketo-checkout/index.ts`
+   - `poketo-webhook` ← `supabase/functions/poketo-webhook/index.ts`
+   Untuk **keduanya**, matikan **Verify JWT / Enforce JWT verification** di pengaturan fungsi.
+4. Di **Supabase → Edge Functions → Secrets**, tambahkan:
+   - `POKETO_SECRET_KEY` = `sk_test_…` (nanti ganti `sk_live_…` setelah verifikasi Poketo)
+   - `POKETO_WEBHOOK_SECRET` = `whsec_…` (langkah 5)
+   - `SITE_URL` = `https://tasura-web.vercel.app`
+5. Di **Poketo** → Pengaturan API → URL webhook: `https://<project-id>.supabase.co/functions/v1/poketo-webhook`,
+   lalu salin rahasia `whsec_…` ke secret `POKETO_WEBHOOK_SECRET`.
+6. Dashboard Admin → **Pengaturan** → centang **Aktifkan pembayaran online** → Simpan.
+7. Coba checkout dengan "Bayar Online"; di halaman bayar sandbox klik tombol simulasi lunas.
+   Status pesanan berubah menjadi **Lunas** dan **Diproses** secara otomatis.
