@@ -398,3 +398,9 @@ button.link:hover{text-decoration:underline}
 textarea.flash{animation:flashBg 1.2s ease}
 @keyframes flashBg{0%{background:#e8f5ec}100%{background:#fff}}
 @media(max-width:480px){.pay-opt{grid-template-columns:auto 1fr auto}.pay-ico{display:none}}
+
+.pay-group{display:grid;gap:8px}
+.pay-group+.pay-group{margin-top:10px}
+.pay-group-head{display:grid;gap:1px}
+.pay-group-head b{font-size:.86rem}
+.pay-group-head small{font-size:.76rem;color:var(--muted)}

@@ -168,3 +168,18 @@
 .cmp-btns{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .cmp-add a{display:grid;place-items:center;min-height:150px;border:2px dashed var(--line);border-radius:14px;color:var(--muted);font-weight:600}
 .cmp-spec{margin-left:16px;display:grid;gap:3px;font-size:.84rem}
+
+/* ====== Konfirmasi pesanan ====== */
+.confirm-hero{padding:44px 0 40px}
+.confirm-grid{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:24px;align-items:start}
+.action-box{background:#fff;border:2px solid var(--black);border-radius:22px;padding:24px;display:grid;gap:14px;position:sticky;top:90px;box-shadow:var(--shadow)}
+.action-box h3{font-size:1.25rem}
+.action-box.done{border-color:#1f6b3a;background:#f3fbf5}
+.step-tag{justify-self:start;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;background:var(--black);color:#fff;padding:3px 10px;border-radius:99px}
+.pay-sum{display:grid;gap:6px;background:var(--gray-bg);border-radius:12px;padding:12px 14px;font-size:.9rem}
+.pay-sum .total-row{border-top:1px solid var(--line);padding-top:8px;font-size:1rem}
+.steps-list{margin-left:18px;display:grid;gap:6px;font-size:.9rem;color:#374151}
+.btn.big{padding:16px 20px;font-size:1rem}
+.btn-wa-green{background:#25d366;color:#fff}
+.btn-wa-green:hover{opacity:.9}
+@media(max-width:900px){.confirm-grid{grid-template-columns:1fr}.action-box{position:static}}

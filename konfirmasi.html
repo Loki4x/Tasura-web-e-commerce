@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konfirmasi Pesanan — Tasura</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="pages.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">Tasura</a>
+      <nav class="nav simple-nav"><a href="index.html">← Kembali ke Toko</a></nav>
+      <div class="header-actions">
+        <a class="icon-btn plain" href="index.html?keranjang=1" aria-label="Keranjang">
+          <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+          <span class="badge" id="cartCount">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="page-hero confirm-hero">
+    <div class="container">
+      <span class="eyebrow">Konfirmasi Pesanan</span>
+      <h1 id="confirmTitle">Pesanan Berhasil Dibuat</h1>
+      <p id="confirmSub">Selesaikan langkah terakhir di bawah ini.</p>
+    </div>
+  </section>
+
+  <main class="container page-main" id="confirmPage"><p class="muted">Memuat pesanan...</p></main>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="db.js"></script>
+  <script src="products.js"></script>
+  <script src="pages.js"></script>
+  <script src="pay.js"></script>
+  <script src="konfirmasi.js"></script>
+</body>
+</html>

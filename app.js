@@ -193,8 +193,9 @@ $("#checkoutForm").promo.addEventListener("input", e => {
 });
 
 // ====== Metode pembayaran ======
-// Poketo aktif: QRIS, Virtual Account, Akulaku PayLater, Kartu Debit (biaya layanan dibayar pembeli).
-// Poketo belum aktif: transfer/e-wallet manual yang dikonfirmasi lewat WhatsApp.
+// Dua cara bayar:
+//  • Otomatis via Poketo (QRIS, Virtual Account, Akulaku PayLater, Kartu Debit) — muncul jika diaktifkan admin
+//  • Via admin (WhatsApp): transfer bank / e-wallet, dikonfirmasi manual
 const MANUAL_METHODS = [
   { code: "TRANSFER", name: "Transfer Bank", icon: "🏦", desc: "Nomor rekening dikirim admin lewat WhatsApp" },
   { code: "EWALLET", name: "E-Wallet (OVO/DANA/GoPay)", icon: "📱", desc: "Nomor e-wallet dikirim admin lewat WhatsApp" },
@@ -202,27 +203,35 @@ const MANUAL_METHODS = [
 let payMethods = [], payPick = null, payRenderId = 0;
 const onlinePay = () => useDb && typeof Pay !== "undefined" && Pay.enabled;
 const payAmount = () => cartTotal() - (promoState.diskon || 0);
+const pickedMethod = () => payMethods.find(m => m.code === payPick);
 async function renderPayList() {
   const id = ++payRenderId, amount = payAmount(), online = onlinePay();
-  const list = online ? await Pay.methods(amount) : MANUAL_METHODS;
+  const auto = online ? await Pay.methods(amount) : [];
   if (id !== payRenderId) return; // ada render yang lebih baru
-  payMethods = list.map(m => {
-    const tooLow = online && m.min && amount < m.min, tooHigh = online && m.max && amount > m.max;
-    return { ...m, online, disabled: online && (!m.available || tooLow || tooHigh),
-      reason: tooHigh ? `Maks. ${rupiah(m.max)} per transaksi` : tooLow ? `Min. ${rupiah(m.min)}` : !m.available && online ? "Sedang tidak tersedia" : "" };
-  });
+  payMethods = [
+    ...auto.map(m => {
+      const tooLow = m.min && amount < m.min, tooHigh = m.max && amount > m.max;
+      return { ...m, online: true, disabled: !m.available || tooLow || tooHigh,
+        reason: tooHigh ? `Maks. ${rupiah(m.max)} per transaksi` : tooLow ? `Min. ${rupiah(m.min)}` : !m.available ? "Sedang tidak tersedia" : "" };
+    }),
+    ...MANUAL_METHODS.map(m => ({ ...m, online: false, disabled: false, reason: "" })),
+  ];
   if (!payPick || !payMethods.some(m => m.code === payPick && !m.disabled)) payPick = payMethods.find(m => !m.disabled)?.code || null;
-  $("#payList").innerHTML = payMethods.map(m => `
+  const opt = m => `
     <label class="pay-opt ${m.disabled ? "off" : ""}">
-      <input type="radio" name="bayar" value="${esc(m.online ? m.name + " (Poketo)" : m.name)}" data-code="${m.code}" ${m.code === payPick ? "checked" : ""} ${m.disabled ? "disabled" : ""} />
+      <input type="radio" name="bayar" value="${esc(m.online ? m.name + " (Poketo)" : m.name + " (via Admin)")}" data-code="${m.code}" ${m.code === payPick ? "checked" : ""} ${m.disabled ? "disabled" : ""} />
       <span class="pay-ico">${esc(m.icon || "💠")}</span>
       <span class="pay-txt"><b>${esc(m.name)}</b><small>${esc(m.reason || m.desc || "")}</small></span>
       ${m.online && !m.disabled && amount > 0 ? `<span class="pay-fee">${m.estimated ? "±" : "+"}${rupiah(m.fee)}<small>biaya layanan</small></span>` : ""}
-    </label>`).join("");
+    </label>`;
+  const autoList = payMethods.filter(m => m.online), manual = payMethods.filter(m => !m.online);
+  $("#payList").innerHTML =
+    (autoList.length ? `<div class="pay-group"><div class="pay-group-head"><b>⚡ Bayar Otomatis via Poketo</b><small>Bayar langsung, status lunas otomatis tanpa konfirmasi manual</small></div>${autoList.map(opt).join("")}</div>` : "") +
+    `<div class="pay-group"><div class="pay-group-head"><b>💬 Bayar via Admin (WhatsApp)</b><small>Konfirmasi pesanan ke admin, lalu admin mengirim info pembayaran</small></div>${manual.map(opt).join("")}</div>`;
   updatePayHint();
 }
 function updatePayHint() {
-  const m = payMethods.find(x => x.code === payPick), req = requestCount() > 0;
+  const m = pickedMethod(), req = requestCount() > 0;
   const showFee = m?.online && !req && payAmount() > 0;
   $("#feeRow").hidden = $("#payTotalRow").hidden = !showFee;
   if (showFee) {
@@ -230,11 +239,9 @@ function updatePayHint() {
     $("#feeVal").textContent = "+" + rupiah(m.fee);
     $("#payTotal").textContent = rupiah(m.totalAmount);
   }
-  $("#payHint").hidden = !m?.online;
-  $("#payHint").textContent = !m?.online ? "" : req
-    ? "Keranjang berisi komponen request: pesanan dikirim ke WhatsApp dulu. Setelah admin mengonfirmasi harganya, bayar online dari halaman Lacak Pesanan."
-    : `Setelah pesanan dibuat, halaman pembayaran Poketo terbuka. Pilih ${m.name} di sana — status lunas diperbarui otomatis.`;
-  $("#checkoutForm button[type=submit]").textContent = m?.online && !req ? `Buat Pesanan & Bayar` : "Pesan via WhatsApp";
+  $("#payHint").hidden = !(m?.online && req);
+  $("#payHint").textContent = m?.online && req ? "Keranjang berisi komponen request: harga komponennya dicarikan admin dulu. Setelah harga dikonfirmasi, kamu bisa bayar via Poketo dari halaman Lacak Pesanan." : "";
+  $("#checkoutForm button[type=submit]").textContent = "Konfirmasi Pesanan";
 }
 $("#payList").addEventListener("change", e => { if (e.target.name === "bayar") { payPick = e.target.dataset.code; updatePayHint(); } });
 const syncPayOption = renderPayList;
@@ -244,24 +251,23 @@ function waMessage(o, f) {
     ? `${n + 1}. *[REQUEST]* ${i.slot ? i.slot + ": " : ""}${i.nama} x${i.qty} = harga menyusul (mohon dicarikan)`
     : `${n + 1}. ${i.nama} x${i.qty} = ${rupiah(i.harga * i.qty)}`).join("\n");
   const nReq = o.items.filter(i => i.custom).length;
-  return `Halo *${STORE.nama}*, saya mau pesan${o.id ? ` (No. Pesanan *#TSR-${o.id}*)` : ""}:\n\n${items}\n\nSubtotal: ${rupiah(o.subtotal)}` +
+  return `Halo *${STORE.nama}*, saya mau konfirmasi pesanan${o.id ? ` *#TSR-${o.id}*` : ""}:\n\n${items}\n\nSubtotal: ${rupiah(o.subtotal)}` +
     (o.diskon ? `\nDiskon (${o.promo}): -${rupiah(o.diskon)}` : "") +
     `\n*${nReq ? "Total sementara" : "Total"}: ${rupiah(o.total)}*` + (nReq ? ` + ${nReq} komponen request (harga menyusul)` : "") +
     `\n\n*Data Pengiriman*\nNama: ${f.nama}\nNo. HP: ${f.hp}\nAlamat: ${f.alamat}\nPembayaran: ${f.bayar}` +
     (o.id ? `\nLacak pesanan: ${location.origin}${location.pathname.replace(/[^/]*$/, "")}lacak.html?id=${o.id}` : "") +
     (lokasi ? `\nTitik lokasi: ${MapPicker.gmaps(lokasi)}` : "") +
-    (f.catatan?.trim() ? `\nCatatan: ${f.catatan.trim()}` : "") + `\n\nTerima kasih 🙏`;
+    (f.catatan?.trim() ? `\nCatatan: ${f.catatan.trim()}` : "") + `\n\nMohon info pembayarannya ya, terima kasih 🙏`;
 }
 
+// Buat pesanan, lalu lanjut ke halaman Konfirmasi Pesanan (bayar via Poketo atau konfirmasi via WhatsApp)
 $("#checkoutForm").onsubmit = async e => {
   e.preventDefault();
   const form = e.target, btn = form.querySelector("button[type=submit]");
   const f = Object.fromEntries(new FormData(form));
   const err = $("#checkoutError"); err.hidden = true;
-  if (!f.bayar) { const err0 = $("#checkoutError"); err0.textContent = "Pilih metode pembayaran."; err0.hidden = false; return; }
-  const online = !!payMethods.find(m => m.code === payPick)?.online && useDb && requestCount() === 0;
-  // Buka tab WhatsApp lebih dulu agar tidak diblokir popup blocker, lalu isi alamatnya setelah pesanan tersimpan.
-  const waTab = online ? null : window.open("", "_blank");
+  const m = pickedMethod();
+  if (!f.bayar || !m) { err.textContent = "Pilih metode pembayaran."; err.hidden = false; return; }
   btn.disabled = true; btn.textContent = "Memproses pesanan...";
   try {
     let order;
@@ -284,28 +290,18 @@ $("#checkoutForm").onsubmit = async e => {
       const sub = cartTotal();
       order = { items: cart.map(i => i.custom ? { ...i, harga: 0 } : { ...findP(i.id), qty: i.qty }), subtotal: sub, diskon: promoState.diskon, promo: promoState.kode, total: sub - promoState.diskon };
     }
-    const url = `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(waMessage(order, f))}`;
-    if (online) {
-      const track = `lacak.html?id=${order.id}&hp=${encodeURIComponent(f.hp)}`;
-      cart = []; saveCart(); localStorage.removeItem("tasura_checkout_note");
-      $("#checkoutModal").classList.remove("show");
-      toast(`Pesanan #TSR-${order.id} dibuat, membuka pembayaran...`);
-      try { await Pay.open(order.id, f.hp, () => { location.href = track; }); }
-      catch (ex) { alert(`Pesanan #TSR-${order.id} sudah dibuat, tetapi halaman pembayaran gagal dibuka: ${ex.message}\nKamu bisa membayar dari halaman Lacak Pesanan atau menghubungi admin.`); location.href = track; }
-      return;
-    }
-    if (waTab) waTab.location.href = url; else location.href = url;
-    cart = []; saveCart(); form.reset(); promoState = { kode: "", diskon: 0, valid: false };
-    localStorage.removeItem("tasura_checkout_note");
-    MapPicker.clear(); $("#locPanel").hidden = true; $("#locToggle").textContent = "Pilih di Peta";
-    $("#checkoutModal").classList.remove("show");
-    toast(order.id ? `Pesanan #TSR-${order.id} dibuat 🎉` : "Pesanan dikirim ke WhatsApp 🎉");
-    if (useDb) loadStore(); // perbarui stok
+    // Data untuk halaman konfirmasi (juga dipakai bila database belum tersambung)
+    sessionStorage.setItem("tasura_last_order", JSON.stringify({
+      order: { ...order, nama: f.nama, hp: f.hp, alamat: f.alamat, pembayaran: f.bayar, catatan: f.catatan || "", created_at: new Date().toISOString(),
+        lokasi_lat: lokasi?.lat ?? null, lokasi_lng: lokasi?.lng ?? null },
+      method: { code: m.code, name: m.name, online: !!m.online && useDb, fee: m.fee ?? null, totalAmount: m.totalAmount ?? null, estimated: !!m.estimated },
+      wa: waMessage(order, f),
+    }));
+    cart = []; saveCart(); localStorage.removeItem("tasura_checkout_note");
+    location.href = order.id ? `konfirmasi.html?id=${order.id}&hp=${encodeURIComponent(f.hp)}` : "konfirmasi.html";
   } catch (ex) {
-    waTab?.close();
     err.textContent = ex.message.replace(/^.*?ERROR:\s*/, "");
     err.hidden = false;
-  } finally {
     btn.disabled = false; updatePayHint();
   }
 };
