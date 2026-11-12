@@ -87,3 +87,14 @@
   .simple-nav{display:flex!important;position:static!important;max-height:none!important;border:0!important;background:none!important;flex-direction:row!important}
   .simple-nav a{padding:0!important;width:auto!important;font-size:.88rem}
 }
+
+/* Daftar hanya produk yang cocok & komponen milik sendiri */
+.hide-hint{font-size:.78rem;color:var(--muted);margin-top:6px}
+.slot.own{border-left-color:#6b7280;background:#f9fafb}
+.part-custom.own{border-color:#9ca3af;background:#fff}
+.slot-issue.own{color:#4b5563;font-weight:500}
+.owned{font-size:.85rem;font-weight:700;color:#374151;background:var(--gray);padding:3px 10px;border-radius:99px;white-space:nowrap}
+.sum-row.is-own{color:var(--muted)}
+.sum-row.is-own em{font-style:normal;font-weight:700}
+.checks-list .own{color:#4b5563}.checks-list .own span{background:var(--gray);font-size:.65rem}
+.builder-hero p b{color:#fff}

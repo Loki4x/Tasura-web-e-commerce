@@ -17,6 +17,10 @@ dikonsultasikan via WhatsApp, atau dibagikan lewat link.
 
 - Jalankan `supabase/003_rakit_pc.sql` (setelah `002_admin.sql`) untuk menambah data kompatibilitas
   dan komponen contoh.
+- Daftar tiap komponen hanya menampilkan produk yang **cocok** dengan komponen lain yang sudah dipilih;
+  produk yang disembunyikan muncul lagi saat pilihan lain diganti/dikosongkan.
+- Semua komponen **opsional**. Pembeli bisa menandai **"Sudah punya sendiri"** untuk komponen miliknya
+  (tidak masuk keranjang, dicatat di catatan pesanan agar ikut dirakit).
 - Setiap komponen dipilih dari daftar produk toko, atau pilih **"Komponen lain — tulis sendiri"** untuk
   me-request komponen yang tidak dijual. Request masuk ke pesanan dengan harga *menyusul*; admin
   mencarikannya (ada tombol cari di Tokopedia/Shopee/Google), mengisi harganya di Dashboard → Pesanan,
