@@ -5,6 +5,39 @@ const Pay = (() => {
   let enabled = false;
   const fnUrl = () => SUPABASE_CONFIG.url.replace(/\/+$/, "") + "/functions/v1/poketo-checkout";
 
+  // Metode pembayaran Poketo (cadangan bila API belum bisa dihubungi; angka sesuai dokumentasi Poketo)
+  const METHODS = [
+    { code: "QRIS", name: "QRIS", icon: "▦", desc: "Scan dengan GoPay, OVO, DANA, ShopeePay, LinkAja, atau m-banking", min: 10000, max: 10000000, pct: 0.7, flat: 0, small: { upTo: 100000, flat: 1000 } },
+    { code: "VA", name: "Virtual Account", icon: "🏦", desc: "Transfer lewat ATM / m-banking (BRI, BNI, Permata, dan bank lain)", min: 10000, max: 50000000, pct: 0, flat: 4000 },
+    { code: "AKULAKU", name: "Akulaku PayLater", icon: "🕒", desc: "Bayar nanti atau cicil dengan Akulaku", min: 10000, max: null, pct: 1.5, flat: 2000 },
+    { code: "CARD", name: "Kartu Debit Visa/Mastercard", icon: "💳", desc: "Formulir kartu dibuka di tab baru", min: 10000, max: null, pct: 2.8, flat: 2000 },
+  ];
+  // Perkiraan total yang dibayar pembeli: nominal + biaya dasar (0,3%, min 200, maks 1.000) + biaya metode (+PPN 11%)
+  function estimate(m, amount) {
+    const platform = Math.min(1000, Math.max(200, Math.round(amount * 0.003)));
+    let total = (amount + platform + (m.flat || 0) * 1.11) / (1 - (m.pct || 0) / 100 * 1.11);
+    if (m.small && total <= m.small.upTo) total = amount + platform + m.small.flat * 1.11;
+    total = Math.ceil(total);
+    return { fee: total - amount, totalAmount: total };
+  }
+  const cache = new Map();
+  // Daftar metode + biaya untuk nominal tertentu: dari Poketo (via Edge Function), atau perkiraan
+  async function methods(amount) {
+    amount = Math.max(0, Math.round(amount));
+    if (cache.has(amount)) return cache.get(amount);
+    let live = null;
+    try {
+      const r = await fetch(fnUrl(), { method: "POST", headers: { "Content-Type": "application/json", apikey: SUPABASE_CONFIG.anonKey, Authorization: `Bearer ${SUPABASE_CONFIG.anonKey}` }, body: JSON.stringify({ action: "methods", amount }) });
+      const d = await r.json();
+      if (r.ok && Array.isArray(d.methods) && d.methods.length) live = d.methods;
+    } catch { /* pakai perkiraan */ }
+    const list = live
+      ? live.map(x => { const base = METHODS.find(m => m.code === x.code) || { icon: "💠", desc: "" }; return { ...base, ...x, desc: x.banks?.length ? `Transfer lewat ATM / m-banking (${x.banks.slice(0, 4).join(", ")}${x.banks.length > 4 ? ", dll." : ""})` : base.desc, estimated: x.totalAmount == null, ...(x.totalAmount == null ? estimate(base, amount) : {}) }; })
+      : METHODS.map(m => ({ ...m, available: true, estimated: true, ...estimate(m, amount) }));
+    cache.set(amount, list);
+    return list;
+  }
+
   async function init() {
     if (!db) return false;
     const { data } = await db.from("settings").select("value").eq("key", "poketo_aktif").maybeSingle();
@@ -70,5 +103,5 @@ const Pay = (() => {
     };
   }
 
-  return { init, open, mount, get enabled() { return enabled; } };
+  return { init, open, mount, methods, estimate, METHODS, get enabled() { return enabled; } };
 })();

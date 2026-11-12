@@ -291,11 +291,10 @@
         <div class="loc-info" id="locInfo" hidden></div>
         <p class="msg error" id="locError" hidden></p>
       </div>
-      <label>Metode Pembayaran
-        <select name="bayar">
-          <option>Transfer Bank</option><option>E-Wallet (OVO/DANA/GoPay)</option>
-        </select>
-      </label>
+      <fieldset class="pay-field">
+        <legend>Metode Pembayaran</legend>
+        <div class="pay-list" id="payList"></div>
+      </fieldset>
       <p class="hint" id="payHint" hidden></p>
       <label>Catatan untuk Penjual (opsional)<textarea name="catatan" rows="2" placeholder="Contoh: tolong cek kompatibilitas dengan PSU saya"></textarea></label>
       <label>Kode Promo (opsional)<input name="promo" placeholder="TASURA10" autocomplete="off" /></label>
@@ -304,6 +303,8 @@
         <div class="row"><span>Subtotal</span><span id="modalSubtotal">Rp0</span></div>
         <div class="row" id="discountRow" hidden><span>Diskon</span><span id="modalDiscount">-Rp0</span></div>
         <div class="row total-row"><span>Total</span><b id="modalTotal">Rp0</b></div>
+        <div class="row" id="feeRow" hidden><span id="feeLabel">Biaya layanan</span><span id="feeVal"></span></div>
+        <div class="row total-row" id="payTotalRow" hidden><span>Total dibayar</span><b id="payTotal"></b></div>
         <p class="request-note" id="requestNote" hidden></p>
       </div>
       <p class="msg error" id="checkoutError" hidden></p>

@@ -121,6 +121,7 @@ async function checkPromo(kode) {
     promoState = { kode, diskon: ok ? Math.round(sub * STORE.promo.diskon) : 0, valid: ok, pesan: ok ? `Kode ${kode} dipakai ✓` : "Kode promo tidak ditemukan" };
   }
   renderSummary();
+  renderPayList();
 }
 function renderSummary() {
   const sub = cartTotal();
@@ -181,7 +182,6 @@ $("#checkoutBtn").onclick = () => {
   const note = localStorage.getItem("tasura_checkout_note");
   if (note && !$("#checkoutForm").catatan.value) $("#checkoutForm").catatan.value = note;
   checkPromo($("#checkoutForm").promo.value);
-  syncPayOption();
   $("#checkoutModal").classList.add("show");
 };
 $("#closeModal").onclick = () => $("#checkoutModal").classList.remove("show");
@@ -192,27 +192,52 @@ $("#checkoutForm").promo.addEventListener("input", e => {
   promoTimer = setTimeout(() => checkPromo(e.target.value), 450);
 });
 
-// ====== Pembayaran online (Poketo) ======
-const ONLINE = "Bayar Online (QRIS, VA, PayLater, Kartu Debit)";
-function syncPayOption() {
-  const sel = $("#checkoutForm").bayar;
-  let opt = [...sel.options].find(o => o.value === ONLINE);
-  if (!(useDb && typeof Pay !== "undefined" && Pay.enabled)) { opt?.remove(); $("#payHint").hidden = true; return; }
-  if (!opt) { opt = new Option(ONLINE, ONLINE); sel.add(opt, 0); }
-  const req = requestCount() > 0;
-  opt.disabled = req;
-  opt.textContent = req ? ONLINE + " — setelah harga request dikonfirmasi" : ONLINE;
-  if (req && sel.value === ONLINE) sel.value = "Transfer Bank";
-  if (!req && !sel.dataset.touched) sel.value = ONLINE;
+// ====== Metode pembayaran ======
+// Poketo aktif: QRIS, Virtual Account, Akulaku PayLater, Kartu Debit (biaya layanan dibayar pembeli).
+// Poketo belum aktif: transfer/e-wallet manual yang dikonfirmasi lewat WhatsApp.
+const MANUAL_METHODS = [
+  { code: "TRANSFER", name: "Transfer Bank", icon: "🏦", desc: "Nomor rekening dikirim admin lewat WhatsApp" },
+  { code: "EWALLET", name: "E-Wallet (OVO/DANA/GoPay)", icon: "📱", desc: "Nomor e-wallet dikirim admin lewat WhatsApp" },
+];
+let payMethods = [], payPick = null, payRenderId = 0;
+const onlinePay = () => useDb && typeof Pay !== "undefined" && Pay.enabled;
+const payAmount = () => cartTotal() - (promoState.diskon || 0);
+async function renderPayList() {
+  const id = ++payRenderId, amount = payAmount(), online = onlinePay();
+  const list = online ? await Pay.methods(amount) : MANUAL_METHODS;
+  if (id !== payRenderId) return; // ada render yang lebih baru
+  payMethods = list.map(m => {
+    const tooLow = online && m.min && amount < m.min, tooHigh = online && m.max && amount > m.max;
+    return { ...m, online, disabled: online && (!m.available || tooLow || tooHigh),
+      reason: tooHigh ? `Maks. ${rupiah(m.max)} per transaksi` : tooLow ? `Min. ${rupiah(m.min)}` : !m.available && online ? "Sedang tidak tersedia" : "" };
+  });
+  if (!payPick || !payMethods.some(m => m.code === payPick && !m.disabled)) payPick = payMethods.find(m => !m.disabled)?.code || null;
+  $("#payList").innerHTML = payMethods.map(m => `
+    <label class="pay-opt ${m.disabled ? "off" : ""}">
+      <input type="radio" name="bayar" value="${esc(m.online ? m.name + " (Poketo)" : m.name)}" data-code="${m.code}" ${m.code === payPick ? "checked" : ""} ${m.disabled ? "disabled" : ""} />
+      <span class="pay-ico">${esc(m.icon || "💠")}</span>
+      <span class="pay-txt"><b>${esc(m.name)}</b><small>${esc(m.reason || m.desc || "")}</small></span>
+      ${m.online && !m.disabled && amount > 0 ? `<span class="pay-fee">${m.estimated ? "±" : "+"}${rupiah(m.fee)}<small>biaya layanan</small></span>` : ""}
+    </label>`).join("");
   updatePayHint();
 }
 function updatePayHint() {
-  const online = $("#checkoutForm").bayar.value === ONLINE;
-  $("#payHint").hidden = !online;
-  $("#payHint").textContent = "Setelah pesanan dibuat, halaman pembayaran Poketo akan terbuka. Bayar dengan QRIS, Virtual Account, PayLater, atau kartu debit — status lunas otomatis.";
-  $("#checkoutForm button[type=submit]").textContent = online ? "Buat Pesanan & Bayar" : "Pesan via WhatsApp";
+  const m = payMethods.find(x => x.code === payPick), req = requestCount() > 0;
+  const showFee = m?.online && !req && payAmount() > 0;
+  $("#feeRow").hidden = $("#payTotalRow").hidden = !showFee;
+  if (showFee) {
+    $("#feeLabel").textContent = `Biaya layanan ${m.name}${m.estimated ? " (perkiraan)" : ""}`;
+    $("#feeVal").textContent = "+" + rupiah(m.fee);
+    $("#payTotal").textContent = rupiah(m.totalAmount);
+  }
+  $("#payHint").hidden = !m?.online;
+  $("#payHint").textContent = !m?.online ? "" : req
+    ? "Keranjang berisi komponen request: pesanan dikirim ke WhatsApp dulu. Setelah admin mengonfirmasi harganya, bayar online dari halaman Lacak Pesanan."
+    : `Setelah pesanan dibuat, halaman pembayaran Poketo terbuka. Pilih ${m.name} di sana — status lunas diperbarui otomatis.`;
+  $("#checkoutForm button[type=submit]").textContent = m?.online && !req ? `Buat Pesanan & Bayar` : "Pesan via WhatsApp";
 }
-$("#checkoutForm").bayar.addEventListener("change", e => { e.target.dataset.touched = "1"; updatePayHint(); });
+$("#payList").addEventListener("change", e => { if (e.target.name === "bayar") { payPick = e.target.dataset.code; updatePayHint(); } });
+const syncPayOption = renderPayList;
 
 function waMessage(o, f) {
   const items = o.items.map((i, n) => i.custom
@@ -233,7 +258,8 @@ $("#checkoutForm").onsubmit = async e => {
   const form = e.target, btn = form.querySelector("button[type=submit]");
   const f = Object.fromEntries(new FormData(form));
   const err = $("#checkoutError"); err.hidden = true;
-  const online = f.bayar === ONLINE && useDb;
+  if (!f.bayar) { const err0 = $("#checkoutError"); err0.textContent = "Pilih metode pembayaran."; err0.hidden = false; return; }
+  const online = !!payMethods.find(m => m.code === payPick)?.online && useDb && requestCount() === 0;
   // Buka tab WhatsApp lebih dulu agar tidak diblokir popup blocker, lalu isi alamatnya setelah pesanan tersimpan.
   const waTab = online ? null : window.open("", "_blank");
   btn.disabled = true; btn.textContent = "Memproses pesanan...";
@@ -288,13 +314,20 @@ $("#checkoutForm").onsubmit = async e => {
 let lokasi = null;
 function renderLoc(v) {
   lokasi = v;
+  const ta = $("#checkoutForm").alamat;
+  // Isi otomatis jika kolom kosong atau isinya masih hasil peta sebelumnya (tidak menimpa ketikan pembeli)
+  if (v?.alamat && (!ta.value.trim() || ta.value === ta.dataset.auto)) {
+    ta.value = v.alamat; ta.dataset.auto = v.alamat;
+    ta.classList.remove("flash"); void ta.offsetWidth; ta.classList.add("flash");
+  }
   const box = $("#locInfo");
   box.hidden = !v;
   if (!v) return;
   box.innerHTML = `<b>📍 Titik dipilih</b> <span class="muted">${v.lat}, ${v.lng}</span>
-    ${v.alamat ? `<div class="loc-addr">${esc(v.alamat)}</div>` : ""}
+    ${v.alamat ? `<div class="loc-addr">${esc(v.alamat)}</div>` : `<div class="loc-addr">Mencari alamat...</div>`}
+    ${v.alamat && $("#checkoutForm").alamat.value === v.alamat ? `<div class="loc-tip">✓ Alamat lengkap diisi dari peta. Tambahkan nomor rumah, RT/RW, atau patokan bila perlu.</div>` : ""}
     <div class="loc-actions"><a href="${MapPicker.gmaps(v)}" target="_blank" rel="noopener" class="link">Cek di Google Maps</a>
-    ${v.alamat ? `<button type="button" class="link" id="locFill">Salin ke kolom alamat</button>` : ""}
+    ${v.alamat && ta.value !== v.alamat ? `<button type="button" class="link" id="locFill">Ganti alamat dengan hasil peta</button>` : ""}
     <button type="button" class="link danger" id="locClear">Hapus titik</button></div>`;
 }
 const locErr = m => { $("#locError").textContent = m || ""; $("#locError").hidden = !m; };
@@ -316,7 +349,7 @@ $("#locSearch").addEventListener("keydown", e => { if (e.key === "Enter") { e.pr
 $("#locMe").onclick = async () => { locErr(""); try { await MapPicker.myLocation(); } catch (e) { locErr(e.message); } };
 $("#locInfo").addEventListener("click", e => {
   if (e.target.id === "locClear") MapPicker.clear();
-  if (e.target.id === "locFill") $("#checkoutForm").alamat.value = lokasi.alamat;
+  if (e.target.id === "locFill") { const ta = $("#checkoutForm").alamat; ta.value = ta.dataset.auto = lokasi.alamat; renderLoc(lokasi); }
 });
 
 $("#loginFromCheckout").onclick = e => { e.preventDefault(); $("#checkoutModal").classList.remove("show"); Auth.openAuth(); };

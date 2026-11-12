@@ -1,6 +1,7 @@
 // ============================================================
 // TASURA — Edge Function: buat tagihan Poketo untuk sebuah pesanan
 // POST { orderId: number, hp: string }  →  { paymentUrl, invoiceId, status }
+// POST { action: "methods", amount: number }  →  { methods: [...] } (metode, batas, biaya dari Poketo)
 //
 // Secrets (Supabase → Edge Functions → Secrets):
 //   POKETO_SECRET_KEY   sk_test_… (sandbox) atau sk_live_…
@@ -46,12 +47,32 @@ async function poketo(path: string, body: unknown, idempotencyKey: string) {
   return out.data;
 }
 
+// Daftar metode pembayaran + biaya layanan untuk nominal tertentu (biaya dibayar pembeli)
+async function paymentMethods(amount: number) {
+  const q = Number.isFinite(amount) && amount > 0 ? `?amount=${Math.round(amount)}` : "";
+  const res = await fetch(`${POKETO_API}/payment-methods${q}`, { headers: { Authorization: `Bearer ${env("POKETO_SECRET_KEY")}` } });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok || out.error) throw new Error(out.error?.message || `Poketo ${res.status}`);
+  return {
+    methods: (out.data ?? []).map((m: Record<string, any>) => ({
+      code: m.code, name: m.name, type: m.type, available: m.available !== false && m.enabled !== false,
+      min: m.limits?.min ?? null, max: m.limits?.max ?? null,
+      banks: (m.banks ?? []).filter((b: unknown) => typeof b === "object").map((b: { name: string }) => b.name),
+      settlementDays: m.settlementDays ?? null,
+      fee: m.quote ? m.quote.totalAmount - m.quote.amount : null,
+      totalAmount: m.quote?.totalAmount ?? null,
+    })),
+  };
+}
+
 export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   if (!env("POKETO_SECRET_KEY")) return json({ error: "Pembayaran online belum diatur (POKETO_SECRET_KEY kosong)." }, 500);
   try {
-    const { orderId, hp } = await req.json().catch(() => ({}));
+    const body = await req.json().catch(() => ({}));
+    if (body.action === "methods") return json(await paymentMethods(Number(body.amount)));
+    const { orderId, hp } = body;
     const id = Number(orderId);
     if (!Number.isInteger(id) || id <= 0) return json({ error: "Nomor pesanan tidak valid." }, 400);
 

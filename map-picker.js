@@ -44,11 +44,30 @@ const MapPicker = (() => {
     clearTimeout(geoTimer);
     geoTimer = setTimeout(async () => {
       try {
-        const r = await fetch(`${NOMINATIM}reverse?format=jsonv2&accept-language=id&zoom=18&lat=${lat}&lon=${lng}`);
+        const r = await fetch(`${NOMINATIM}reverse?format=jsonv2&addressdetails=1&accept-language=id&zoom=18&lat=${lat}&lon=${lng}`);
         const d = await r.json();
-        if (value && value.lat === lat && value.lng === lng) { value.alamat = d.display_name || ""; onChange(value); }
+        if (value && value.lat === lat && value.lng === lng) { value.alamat = formatAddress(d.address, d.display_name); onChange(value); }
       } catch { /* alamat perkiraan opsional */ }
     }, 700);
+  }
+
+  // Susun alamat gaya Indonesia: Jalan No., Kel., Kec., Kota, Provinsi Kode Pos
+  function formatAddress(a, fallback = "") {
+    if (!a) return String(fallback).replace(/,\s*Indonesia$/i, "");
+    const road = a.road || a.pedestrian || a.residential || a.footway || a.path;
+    const pre = (label, v) => !v ? "" : new RegExp(`^(${label}|kelurahan|desa|kecamatan)\\b`, "i").test(v) ? v : `${label} ${v}`;
+    const parts = [
+      a.amenity || a.building || a.shop || a.office || "",
+      road ? road + (a.house_number ? ` No. ${a.house_number}` : "") : "",
+      a.neighbourhood || a.hamlet || a.quarter || "",
+      pre("Kel.", a.village || a.suburb),
+      pre("Kec.", a.city_district || a.district || a.municipality),
+      (a.city || a.town || a.county || a.regency || "").toLowerCase() === String(a.state || a.province || "").toLowerCase() ? "" : (a.city || a.town || a.county || a.regency || ""),
+      [a.state || a.province, a.postcode].filter(Boolean).join(" "),
+    ].map(x => String(x).trim()).filter(Boolean);
+    const seen = new Set();
+    const uniq = parts.filter(x => { const k = x.toLowerCase().replace(/^(kel\.|kec\.)\s*/, ""); if (seen.has(k)) return false; seen.add(k); return true; });
+    return uniq.length >= 2 ? uniq.join(", ") : String(fallback).replace(/,\s*Indonesia$/i, "");
   }
 
   async function search(q) {
@@ -70,5 +89,5 @@ const MapPicker = (() => {
 
   function clear() { value = null; if (marker) { map.removeLayer(marker); marker = null; } onChange(null); }
   const gmaps = v => `https://www.google.com/maps?q=${v.lat},${v.lng}`;
-  return { mount, set, search, myLocation, clear, gmaps, get value() { return value; } };
+  return { mount, set, search, myLocation, clear, gmaps, formatAddress, get value() { return value; } };
 })();
