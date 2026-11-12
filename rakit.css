@@ -1,0 +1,96 @@
+/* ====== Tasura — Rakit PC ====== */
+.simple-nav{display:flex}
+.builder-hero{background:radial-gradient(circle at 80% 30%,#2a2b30 0%,var(--dark) 60%);color:#fff;padding:64px 0 56px}
+.builder-hero h1{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:800;text-transform:uppercase;letter-spacing:-2px;line-height:1}
+.builder-hero p{color:#c9cbd1;max-width:620px;margin-top:16px;font-size:1.05rem}
+.builder{display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start;padding:40px 0 100px}
+.slots-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.slots-head h2{font-size:1.3rem}
+#slotList{display:grid;gap:12px}
+.slot{display:grid;grid-template-columns:64px 1fr auto;gap:16px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;transition:.2s;border-left:4px solid var(--line)}
+.slot[data-slot]:not(.ok):not(.bad):not(.warn){cursor:pointer}
+.slot:hover{box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.slot.ok{border-left-color:#1f9d55}
+.slot.warn{border-left-color:#e3a008}
+.slot.bad{border-left-color:#e5484d;background:#fffafa}
+.slot.empty-cat{opacity:.6}
+.slot-icon{width:64px;height:64px;border-radius:14px;background:var(--gray);display:grid;place-items:center;font-size:2rem;overflow:hidden}
+.slot-icon img{width:100%;height:100%;object-fit:cover}
+.slot-label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.req,.opt{font-size:.65rem;padding:2px 8px;border-radius:99px;letter-spacing:.5px}
+.req{background:var(--black);color:#fff}
+.opt{background:var(--gray);color:var(--muted)}
+.slot-name{font-weight:700;margin:2px 0 6px}
+.slot-empty{color:var(--soft);margin-top:4px}
+.slot-side{display:grid;justify-items:end;gap:6px;text-align:right}
+.slot-actions{display:flex;gap:12px}
+.link.danger{color:#b42318}
+.btn.sm{padding:9px 20px;font-size:.88rem}
+.chips-row{display:flex;flex-wrap:wrap;gap:6px}
+.chip-attr{font-size:.72rem;font-weight:600;background:var(--gray);color:#374151;padding:3px 9px;border-radius:7px}
+.slot-issue{font-size:.82rem;font-weight:600;margin-top:6px}
+.slot-issue.bad{color:#b42318}
+.slot-issue.warn{color:#9a5b00}
+.slot-issue.ok{color:#1f6b3a}
+
+/* Summary */
+.summary-card{position:sticky;top:88px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;display:grid;gap:14px;box-shadow:var(--shadow)}
+.summary-card h3{font-size:1.15rem}
+.summary-card h4{font-size:.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+#sumItems{display:grid;gap:8px;max-height:260px;overflow:auto}
+.sum-row{display:flex;justify-content:space-between;gap:12px;font-size:.88rem}
+.sum-row span:last-child{white-space:nowrap;font-weight:600}
+.sum-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:12px}
+.sum-total b{font-size:1.5rem;font-weight:800}
+.sum-watt{font-size:.82rem;color:var(--muted)}
+.sum-watt:empty{display:none}
+.checks-list{list-style:none;display:grid;gap:8px;font-size:.86rem}
+.checks-list li{display:flex;gap:10px;align-items:flex-start;line-height:1.4}
+.checks-list li span{flex-shrink:0;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:.72rem;font-weight:800}
+.checks-list .ok span{background:#e8f5ec;color:#1f6b3a}
+.checks-list .bad{color:#b42318}.checks-list .bad span{background:#fdecec;color:#b42318}
+.checks-list .warn{color:#9a5b00}.checks-list .warn span{background:#fff4e5;color:#9a5b00}
+.checks-list .info{color:var(--muted)}.checks-list .info span{background:var(--gray)}
+.assemble{display:grid!important;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;font-weight:600;font-size:.9rem;background:var(--gray-bg);padding:12px;border-radius:12px;cursor:pointer}
+.assemble input{width:18px;height:18px;accent-color:#0a0a0a}
+.assemble small{grid-column:2;font-weight:400;color:var(--muted);font-size:.78rem}
+.check{display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer}
+
+/* Picker */
+.pick-box{width:min(760px,100%);max-height:88vh;display:flex;flex-direction:column;gap:0;padding-bottom:0}
+.pick-box>*{margin-inline:0!important}
+.pick-tools{display:flex;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.pick-search{flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font:inherit}
+.pick-list{overflow:auto;padding:12px 20px 20px;display:grid;gap:10px}
+.pick-item{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:12px}
+.pick-item.current{border:2px solid var(--black)}
+.pick-item.bad{background:#fffafa}
+.pick-item.soldout{opacity:.55}
+.pick-thumb{width:64px;height:64px;border-radius:12px;background:var(--gray);display:grid;place-items:center;font-size:2rem;overflow:hidden}
+.pick-thumb img{width:100%;height:100%;object-fit:cover}
+.pick-info b{display:block;margin-bottom:6px}
+.pick-side{display:grid;justify-items:end;gap:6px;text-align:right}
+.pick-side s{font-size:.78rem;color:var(--muted)}
+
+/* Mobile bar */
+.mobile-bar{display:none}
+@media(max-width:960px){
+  .builder{grid-template-columns:1fr}
+  .summary-card{position:static}
+  .mobile-bar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid var(--line);padding:12px 16px;justify-content:space-between;align-items:center;box-shadow:0 -8px 24px rgba(0,0,0,.08)}
+  .mobile-bar small{display:block;color:var(--muted);font-size:.75rem}
+  .mobile-bar b{font-size:1.2rem}
+}
+@media(max-width:600px){
+  .slot{grid-template-columns:52px 1fr;gap:12px}
+  .slot-icon{width:52px;height:52px;font-size:1.6rem}
+  .slot-side{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;justify-items:unset}
+  .pick-item{grid-template-columns:52px 1fr}
+  .pick-thumb{width:52px;height:52px}
+  .pick-side{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}
+  .builder-hero{padding:44px 0 40px}
+}
+@media(max-width:900px){
+  .simple-nav{display:flex!important;position:static!important;max-height:none!important;border:0!important;background:none!important;flex-direction:row!important}
+  .simple-nav a{padding:0!important;width:auto!important;font-size:.88rem}
+}

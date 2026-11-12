@@ -125,3 +125,9 @@ label.check input{width:18px;height:18px;accent-color:#0a0a0a}
   .form-cols,.order-grid{grid-template-columns:1fr}
 }
 @media(max-width:560px){.stats-grid{grid-template-columns:1fr 1fr;gap:10px}.stat b{font-size:1.25rem}.stat{padding:14px}.row-2{grid-template-columns:1fr}}
+.compat{border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:10px}
+.compat legend{font-weight:700;font-size:.9rem;padding:0 6px}
+.compat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.compat-grid label{display:grid;gap:6px;font-size:.85rem;font-weight:600}
+.compat-grid label.check{align-self:end;padding-bottom:10px}
+@media(max-width:860px){.compat-grid{grid-template-columns:1fr 1fr}}

@@ -9,6 +9,18 @@ Website toko online statis (HTML, CSS, JavaScript). Tidak perlu server atau data
 - **Akun pelanggan** (Supabase): daftar/masuk dengan email atau Google, lupa password,
   profil (alamat tersimpan & otomatis terisi saat checkout), riwayat & status pesanan
 
+## Rakit PC (`/rakit.html`)
+Pembeli memilih Processor, Motherboard, RAM, VGA, Storage, PSU, Casing, dan Cooler.
+Kecocokan dicek otomatis: socket CPU–motherboard, tipe RAM DDR4/DDR5, ukuran motherboard–casing,
+panjang VGA–casing, socket cooler, dan daya PSU. Rakitan bisa dimasukkan ke keranjang,
+dikonsultasikan via WhatsApp, atau dibagikan lewat link.
+
+- Jalankan `supabase/003_rakit_pc.sql` (setelah `002_admin.sql`) untuk menambah data kompatibilitas
+  dan komponen contoh.
+- Kategori produk yang dipakai: **Processor, Motherboard, RAM, VGA, Storage, PSU, Casing, Cooler**
+  (penulisan harus sama).
+- Data kompatibilitas diisi di Dashboard Admin → Produk → Edit → **Kompatibilitas Rakit PC**.
+
 ## Dashboard Admin (`/admin.html`)
 - **Ringkasan**: pendapatan bulan ini, pesanan yang perlu dikonfirmasi/dikirim, stok menipis
 - **Pesanan**: semua pesanan (termasuk tamu), ubah status, isi no. resi, catatan internal,

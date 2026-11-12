@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rakit PC — Tasura</title>
+  <meta name="description" content="Rakit PC sendiri di Tasura: pilih processor, motherboard, RAM, VGA, storage, PSU, dan casing dengan cek kompatibilitas otomatis." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="rakit.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">Tasura</a>
+      <nav class="nav simple-nav">
+        <a href="index.html">← Kembali ke Toko</a>
+      </nav>
+      <div class="header-actions">
+        <a class="icon-btn plain" href="index.html?keranjang=1" aria-label="Keranjang">
+          <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+          <span class="badge" id="cartCount">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="builder-hero">
+    <div class="container">
+      <span class="eyebrow">PC Builder</span>
+      <h1>Rakit PC Impianmu</h1>
+      <p>Pilih komponen satu per satu. Tasura otomatis mengecek kecocokan socket, tipe RAM, ukuran casing, panjang VGA, dan daya PSU.</p>
+    </div>
+  </section>
+
+  <main class="container builder">
+    <section class="slots">
+      <div class="slots-head">
+        <h2>Komponen</h2>
+        <button class="link" id="resetBuild">Kosongkan semua</button>
+      </div>
+      <div id="slotList"><p class="muted">Memuat komponen...</p></div>
+    </section>
+
+    <aside class="summary-card" id="summary">
+      <h3>Ringkasan Rakitan</h3>
+      <div id="sumItems"></div>
+      <div class="sum-total"><span>Total</span><b id="sumTotal">Rp0</b></div>
+      <div class="sum-watt" id="sumWatt"></div>
+      <h4>Cek Kompatibilitas</h4>
+      <ul class="checks-list" id="checkList"></ul>
+      <label class="check assemble"><input type="checkbox" id="assemble" checked /> Minta dirakitkan oleh Tasura<small>Biaya jasa rakit dikonfirmasi admin via WhatsApp</small></label>
+      <p class="msg error" id="buildError" hidden></p>
+      <button class="btn btn-primary full" id="addBuild">Masukkan ke Keranjang</button>
+      <a class="btn btn-ghost full" id="waBuild" target="_blank">💬 Konsultasi via WhatsApp</a>
+      <button class="link center-text" id="shareBuild">🔗 Salin link rakitan ini</button>
+    </aside>
+  </main>
+
+  <!-- Bar ringkasan di HP -->
+  <div class="mobile-bar" id="mobileBar">
+    <div><small>Total rakitan</small><b id="mbTotal">Rp0</b></div>
+    <button class="btn btn-primary" id="mbGo">Lihat Ringkasan</button>
+  </div>
+
+  <!-- Modal pilih komponen -->
+  <div class="modal" id="pickModal">
+    <div class="modal-box pick-box">
+      <div class="drawer-head"><h3 id="pickTitle">Pilih Komponen</h3><button class="icon-btn" data-close-pick>✕</button></div>
+      <div class="pick-tools">
+        <input type="search" class="pick-search" id="pickSearch" placeholder="Cari..." />
+        <label class="check"><input type="checkbox" id="onlyCompat" checked /> Hanya yang cocok</label>
+      </div>
+      <div class="pick-list" id="pickList"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="db.js"></script>
+  <script src="products.js"></script>
+  <script src="rakit.js"></script>
+</body>
+</html>

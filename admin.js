@@ -286,6 +286,38 @@ function setPreview(url, emoji) {
   $("#imgPreview").innerHTML = url ? `<img src="${esc(url)}" alt="">` : esc(emoji || "📦");
   $("#imgRemove").hidden = !url;
 }
+// ---- Kompatibilitas Rakit PC ----
+const BUILDER_CATS = ["Processor", "Motherboard", "RAM", "VGA", "Storage", "PSU", "Casing", "Cooler"];
+const COMPAT_LABEL = {
+  Processor: { c_socket: "Socket", c_watt: "TDP (W)" }, Motherboard: { c_socket: "Socket", c_form: "Ukuran (form factor)" },
+  Cooler: { c_socket: "Socket didukung (pisahkan koma)" }, Casing: { c_form: "Ukuran motherboard maksimal" },
+  VGA: { c_watt: "Konsumsi daya (W)" }, PSU: { c_watt: "Kapasitas daya (W)" },
+};
+function syncCompat() {
+  const f = $("#productForm"), raw = f.kategori.value.trim();
+  const kat = BUILDER_CATS.find(k => k.toLowerCase() === raw.toLowerCase());
+  let shown = 0;
+  $$("#compatBox [data-for]").forEach(el => {
+    const on = !!kat && el.dataset.for.split(",").includes(kat);
+    el.hidden = !on; if (on) shown++;
+    const lbl = el.querySelector("[data-lbl]"), name = el.querySelector("input,select")?.name;
+    if (on && lbl && COMPAT_LABEL[kat]?.[name]) lbl.textContent = COMPAT_LABEL[kat][name];
+  });
+  $("#compatHint").textContent = !kat ? `Kategori ini tidak dipakai di halaman Rakit PC. Kategori yang dipakai: ${BUILDER_CATS.join(", ")}.`
+    : shown ? "Diisi agar halaman Rakit PC bisa mengecek kecocokan komponen ini." : "Kategori ini tidak butuh data kompatibilitas.";
+}
+function readCompat() {
+  const a = {};
+  $$("#compatBox [data-for]").forEach(el => {
+    if (el.hidden) return;
+    const i = el.querySelector("input,select"), k = i.name.slice(2);
+    if (i.type === "checkbox") a[k] = i.checked;
+    else if (i.value.trim() !== "") a[k] = i.type === "number" ? Number(i.value) : i.value.trim().replace(/\s*,\s*/g, ",");
+  });
+  return a;
+}
+$("#productForm").kategori.addEventListener("input", syncCompat);
+
 function openProduct(id) {
   const p = id ? S.products.find(x => x.id === id) : null;
   S.editing = p;
@@ -298,6 +330,10 @@ function openProduct(id) {
   f.gambar.value = v.gambar || "";
   f.spek.value = (v.spek || []).join("\n");
   f.aktif.checked = v.aktif;
+  const at = v.atribut || {};
+  ["socket", "ram", "form", "watt", "panjang", "vga_maks"].forEach(k => f["c_" + k].value = at[k] ?? "");
+  f.c_igpu.checked = at.igpu === true;
+  syncCompat();
   setPreview(f.gambar.value, f.emoji.value);
   openModal("#productModal");
 }
@@ -325,6 +361,7 @@ $("#productForm").onsubmit = async e => {
     stok: num(f.stok.value) ?? 0, urutan: num(f.urutan.value) ?? 0, rating: num(f.rating.value) ?? 5, terjual: num(f.terjual.value) ?? 0,
     emoji: f.emoji.value.trim() || "📦", gambar: f.gambar.value || null, deskripsi: f.deskripsi.value.trim(),
     spek: f.spek.value.split("\n").map(s => s.trim()).filter(Boolean), aktif: f.aktif.checked, updated_at: new Date().toISOString(),
+    atribut: readCompat(),
   };
   if (row.harga_coret && row.harga_coret <= row.harga) { $("#productError").textContent = "Harga coret harus lebih besar dari harga jual (atau kosongkan)."; $("#productError").hidden = false; return; }
   busy(btn, true);

@@ -152,6 +152,8 @@ $("#checkoutBtn").onclick = () => {
   $("#loginHint").hidden = Auth.loggedIn;
   $("#checkoutError").hidden = true;
   Auth.prefill($("#checkoutForm"));
+  const note = localStorage.getItem("tasura_checkout_note");
+  if (note && !$("#checkoutForm").catatan.value) $("#checkoutForm").catatan.value = note;
   checkPromo($("#checkoutForm").promo.value);
   $("#checkoutModal").classList.add("show");
 };
@@ -196,6 +198,7 @@ $("#checkoutForm").onsubmit = async e => {
     const url = `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(waMessage(order, f))}`;
     if (waTab) waTab.location.href = url; else location.href = url;
     cart = []; saveCart(); form.reset(); promoState = { kode: "", diskon: 0, valid: false };
+    localStorage.removeItem("tasura_checkout_note");
     $("#checkoutModal").classList.remove("show");
     toast(order.id ? `Pesanan #TSR-${order.id} dibuat 🎉` : "Pesanan dikirim ke WhatsApp 🎉");
     if (useDb) loadStore(); // perbarui stok
@@ -292,4 +295,7 @@ async function loadStore() {
 }
 if (db) { $("#productGrid").innerHTML = `<p class="empty">Memuat produk...</p>`; $("#popularGrid").innerHTML = ""; }
 else renderAll();
-loadStore();
+loadStore().then(() => {
+  // Dibuka dari halaman Rakit PC: langsung tampilkan keranjang
+  if (new URLSearchParams(location.search).has("keranjang")) { history.replaceState(null, "", location.pathname); openCart(); }
+});

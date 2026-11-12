@@ -8,5 +8,5 @@ const rupiah = n => "Rp" + Number(n || 0).toLocaleString("id-ID");
 const fromDbProduct = r => ({
   id: r.id, nama: r.nama, kategori: r.kategori, harga: r.harga, hargaCoret: r.harga_coret || 0,
   stok: r.stok, rating: Number(r.rating), terjual: r.terjual, emoji: r.emoji || "📦",
-  gambar: r.gambar || "", deskripsi: r.deskripsi || "", spek: r.spek || [], aktif: r.aktif,
+  gambar: r.gambar || "", deskripsi: r.deskripsi || "", spek: r.spek || [], aktif: r.aktif, atribut: r.atribut || {},
 });

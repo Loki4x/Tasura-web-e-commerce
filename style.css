@@ -330,3 +330,26 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 .summary .total-row{border-top:1px solid var(--line);padding-top:8px;font-size:1rem}
 .summary [hidden]{display:none}
 #checkoutError[hidden]{display:none}
+
+/* ====== Rakit PC (halaman utama) ====== */
+.nav>a.nav-hot{font-weight:700;color:var(--black)}
+.nav>a.nav-hot::after{content:"BARU";font-size:.6rem;font-weight:800;background:var(--black);color:#fff;padding:2px 6px;border-radius:6px;margin-left:6px;vertical-align:2px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-outline-light{border:1.5px solid rgba(255,255,255,.5);color:#fff;background:transparent}
+.btn-outline-light:hover{background:#fff;color:var(--black)}
+.builder-cta{background:var(--dark);color:#fff;border-radius:28px;padding:56px;display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center;margin-bottom:24px;overflow:hidden;position:relative}
+.builder-cta h2{font-size:clamp(1.8rem,3.6vw,2.8rem);font-weight:800;text-transform:uppercase;letter-spacing:-1.5px;line-height:1.05}
+.builder-cta p{color:#c9cbd1;margin:16px 0}
+.builder-cta ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin-bottom:28px;font-size:.92rem;color:#e5e7eb}
+.builder-cta-visual{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.builder-cta-visual span{aspect-ratio:1;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;font-size:2.6rem}
+@media(max-width:900px){
+  .builder-cta{grid-template-columns:1fr;padding:40px 28px}
+  .builder-cta-visual{grid-template-columns:repeat(6,1fr);gap:8px}
+  .builder-cta-visual span{font-size:1.5rem;border-radius:12px}
+  .slide .hero-btns{justify-content:center}
+}
+@media(max-width:600px){.builder-cta ul{grid-template-columns:1fr}}
+button.link{background:none;border:0;cursor:pointer;padding:0;font:inherit;font-weight:600;font-size:.85rem;color:var(--black)}
+button.link:hover{text-decoration:underline}
+.link.danger{color:#b42318}

@@ -170,6 +170,20 @@ on conflict do nothing;</pre>
           <label>Spesifikasi (satu baris = satu poin)<textarea class="input" name="spek" rows="5" placeholder="Memori 8GB GDDR6&#10;Konektor daya 1× 8-pin"></textarea></label>
         </div>
       </div>
+      <fieldset class="compat" id="compatBox">
+        <legend>Kompatibilitas Rakit PC</legend>
+        <p class="muted" id="compatHint"></p>
+        <div class="compat-grid">
+          <label data-for="Processor,Motherboard,Cooler"><span data-lbl>Socket</span><input class="input" name="c_socket" list="socketList" placeholder="AM5" /></label>
+          <datalist id="socketList"><option value="AM4"><option value="AM5"><option value="LGA1700"><option value="LGA1851"><option value="AM4,AM5,LGA1700"></datalist>
+          <label data-for="RAM,Motherboard">Tipe RAM<select class="input" name="c_ram"><option value="">—</option><option>DDR4</option><option>DDR5</option></select></label>
+          <label data-for="Motherboard,Casing"><span data-lbl>Ukuran (form factor)</span><select class="input" name="c_form"><option value="">—</option><option>ATX</option><option>mATX</option><option>ITX</option></select></label>
+          <label data-for="Processor,VGA,PSU"><span data-lbl>Daya (W)</span><input class="input" name="c_watt" type="number" min="0" /></label>
+          <label data-for="VGA">Panjang VGA (mm)<input class="input" name="c_panjang" type="number" min="0" /></label>
+          <label data-for="Casing">Panjang VGA maks. (mm)<input class="input" name="c_vga_maks" type="number" min="0" /></label>
+          <label data-for="Processor" class="check"><input type="checkbox" name="c_igpu" /> Punya grafis bawaan (iGPU)</label>
+        </div>
+      </fieldset>
       <p class="msg error" id="productError" hidden></p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>Batal</button>
