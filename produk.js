@@ -93,7 +93,7 @@ function addToCart(go) {
   item ? item.qty += qty : cart.push({ id: P.id, qty });
   localStorage.setItem("tasura_cart", JSON.stringify(cart));
   updateCartCount();
-  if (go) location.href = "index.html?keranjang=1"; else toast("✓ Ditambahkan ke keranjang");
+  if (go) CartDrawer.open(); else toast("✓ Ditambahkan ke keranjang");
 }
 function syncCompareBtn() {
   const b = $("#compareBtn"); if (b) b.textContent = Compare.has(P.id) ? "✓ Dibandingkan (hapus)" : "⇄ Bandingkan";

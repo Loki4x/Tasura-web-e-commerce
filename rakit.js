@@ -280,7 +280,7 @@ function addToCart() {
     ownList.length ? "Komponen milik sendiri yang ikut dirakit: " + ownList.join(", ") : "",
   ].filter(Boolean).join(". ");
   if (note) localStorage.setItem("tasura_checkout_note", note.slice(0, 500)); else localStorage.removeItem("tasura_checkout_note");
-  location.href = "index.html?keranjang=1";
+  CartDrawer.open();
 }
 
 // ---------- Events ----------

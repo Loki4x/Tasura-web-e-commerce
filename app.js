@@ -449,11 +449,20 @@ async function loadStore() {
   if (cfg.pengumuman) $("#announceText").textContent = cfg.pengumuman;
   renderAll();
 }
-if (db) { $("#productGrid").innerHTML = `<p class="empty">Memuat produk...</p>`; $("#popularGrid").innerHTML = ""; }
+// Dibuka dari halaman lain: ?keranjang=1 (keranjang) atau ?checkout=1 (data pengiriman) langsung tampil
+const startParams = new URLSearchParams(location.search);
+const startWith = startParams.has("checkout") ? "checkout" : startParams.has("keranjang") ? "keranjang" : "";
+if (startWith) {
+  history.replaceState(null, "", location.pathname);
+  if (startWith === "checkout") $("#checkoutModal").classList.add("show"); else openCart();
+}
+if (db) {
+  $("#productGrid").innerHTML = `<p class="empty">Memuat produk...</p>`; $("#popularGrid").innerHTML = "";
+  if (startWith === "keranjang") $("#cartItems").innerHTML = `<div class="cart-empty">Memuat keranjang...</div>`;
+}
 else renderAll();
 loadStore().then(() => {
-  // Dibuka dari halaman Rakit PC: langsung tampilkan keranjang
   const cat = sessionStorage.getItem("tasura_cat");
   if (cat) { sessionStorage.removeItem("tasura_cat"); activeCat = cat; renderCategories(); renderProducts(); }
-  if (new URLSearchParams(location.search).has("keranjang")) { history.replaceState(null, "", location.pathname); openCart(); }
+  if (startWith === "checkout") { if (cart.length) $("#checkoutBtn").onclick(); else { $("#checkoutModal").classList.remove("show"); openCart(); } }
 });
