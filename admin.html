@@ -28,6 +28,7 @@
       <nav class="side-nav" id="sideNav">
         <button data-view="ringkasan" class="active"><span>📊</span>Ringkasan</button>
         <button data-view="pesanan"><span>🧾</span>Pesanan <b class="nav-badge" id="newBadge" hidden>0</b></button>
+        <button data-view="laporan"><span>📈</span>Laporan</button>
         <button data-view="produk"><span>🖥️</span>Produk</button>
         <button data-view="kupon"><span>🏷️</span>Kupon Diskon</button>
         <button data-view="rakitan"><span>🧩</span>Rakitan</button>
@@ -74,6 +75,28 @@
           <input type="search" class="input" id="orderSearch" placeholder="Cari nama, no. HP, atau #TSR-..." />
         </div>
         <div class="panel table-wrap"><table class="table" id="ordersTable"></table></div>
+      </section>
+
+      <!-- LAPORAN -->
+      <section class="view" data-view="laporan" hidden>
+        <header class="view-head">
+          <div><h1>Laporan Penjualan</h1><p class="muted">Pendapatan dihitung dari pesanan yang sudah dibayar atau diproses/dikirim/selesai (tidak termasuk yang dibatalkan).</p></div>
+          <div class="report-actions">
+            <button class="btn btn-ghost sm" id="exportOrders">⬇️ Excel: Pesanan</button>
+            <button class="btn btn-ghost sm" id="exportProducts">⬇️ Excel: Produk Terlaris</button>
+          </div>
+        </header>
+        <div class="toolbar"><div class="chips" id="reportRange"></div></div>
+        <div class="stats-grid" id="reportStats"></div>
+        <div class="panel chart-panel">
+          <div class="panel-head"><div><h3>Pendapatan per bulan</h3><small class="muted" id="chartSub"></small></div><button class="link" id="chartTableToggle">Lihat tabel</button></div>
+          <div class="chart" id="revChart"></div>
+          <div id="revTable" hidden></div>
+        </div>
+        <div class="two-col">
+          <div class="panel"><div class="panel-head"><h3>Produk terlaris</h3><small class="muted">berdasarkan jumlah terjual</small></div><div id="topProducts"></div></div>
+          <div class="panel"><div class="panel-head"><h3>Penjualan per kategori</h3></div><div id="topCats"></div></div>
+        </div>
       </section>
 
       <!-- PRODUK -->
@@ -283,6 +306,7 @@ on conflict do nothing;</pre>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
   <script src="db.js"></script>
+  <script src="xlsx.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

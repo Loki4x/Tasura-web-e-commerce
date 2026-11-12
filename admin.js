@@ -96,7 +96,7 @@ async function loadAll() {
   S.settings = Object.fromEntries((st.data || []).map(r => [r.key, r.value]));
   renderAllViews();
 }
-function renderAllViews() { renderSummary(); renderOrders(); renderProducts(); renderCoupons(); renderPresets(); renderReviews(); renderAlerts(); renderCustomers(); renderSettings(); updateBadge(); }
+function renderAllViews() { renderSummary(); renderOrders(); renderProducts(); renderCoupons(); renderPresets(); renderReport(); renderReviews(); renderAlerts(); renderCustomers(); renderSettings(); updateBadge(); }
 
 function updateBadge() {
   const n = S.orders.filter(o => o.status === "Menunggu Konfirmasi").length;
@@ -532,6 +532,129 @@ $("#couponForm").onsubmit = async e => {
   }
   if (S.editing) Object.assign(S.editing, data); else S.coupons.unshift(data);
   renderCoupons(); closeModals(); toast("Kupon disimpan ✓");
+};
+
+// ================== LAPORAN PENJUALAN ==================
+const RANGES = [["6 bulan", 6], ["12 bulan", 12], ["Tahun ini", "ytd"], ["Semua", "all"]];
+S.range = 6;
+const isRevenue = o => o.status !== "Dibatalkan" && (PAID.includes(o.status) || o.bayar_status === "lunas");
+const compact = n => n >= 1e9 ? (n / 1e9).toFixed(n % 1e9 ? 1 : 0).replace(".", ",") + " M" : n >= 1e6 ? (n / 1e6).toFixed(n % 1e6 ? 1 : 0).replace(".", ",") + " jt" : n >= 1e3 ? Math.round(n / 1e3) + " rb" : String(n);
+const monthKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+const monthName = k => { const [y, m] = k.split("-"); return new Date(+y, +m - 1, 1).toLocaleDateString("id-ID", { month: "short", year: "2-digit" }); };
+
+function reportData() {
+  const now = new Date();
+  let start;
+  if (S.range === "all") start = S.orders.length ? new Date(Math.min(...S.orders.map(o => +new Date(o.created_at)))) : now;
+  else if (S.range === "ytd") start = new Date(now.getFullYear(), 0, 1);
+  else start = new Date(now.getFullYear(), now.getMonth() - S.range + 1, 1);
+  start = new Date(start.getFullYear(), start.getMonth(), 1);
+  const months = [];
+  for (let d = new Date(start); d <= now; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) months.push(monthKey(d));
+  const inRange = S.orders.filter(o => new Date(o.created_at) >= start);
+  const paid = inRange.filter(isRevenue);
+  const byMonth = Object.fromEntries(months.map(m => [m, { revenue: 0, orders: 0 }]));
+  paid.forEach(o => { const k = monthKey(new Date(o.created_at)); if (byMonth[k]) { byMonth[k].revenue += o.total; byMonth[k].orders++; } });
+  const prod = {}, cat = {};
+  paid.forEach(o => o.items.forEach(i => {
+    const key = i.custom ? "req:" + i.nama : i.id;
+    const p = prod[key] ||= { nama: i.nama, qty: 0, revenue: 0, custom: !!i.custom };
+    p.qty += i.qty; p.revenue += (i.harga || 0) * i.qty;
+    const k = i.custom ? (i.slot || "Komponen request") : (S.products.find(x => x.id === i.id)?.kategori || "Lainnya");
+    const c = cat[k] ||= { qty: 0, revenue: 0 }; c.qty += i.qty; c.revenue += (i.harga || 0) * i.qty;
+  }));
+  return { start, months, byMonth, inRange, paid, prod: Object.values(prod).sort((a, b) => b.qty - a.qty || b.revenue - a.revenue),
+    cat: Object.entries(cat).sort((a, b) => b[1].revenue - a[1].revenue) };
+}
+
+function revenueChart(months, byMonth) {
+  const W = 760, H = 260, L = 64, R = 12, T = 22, B = 30;
+  const vals = months.map(m => byMonth[m].revenue);
+  const max = Math.max(...vals, 0);
+  // skala bulat: 1, 2, 2.5, 5 × 10^n
+  const rawStep = (max || 1) / 4, mag = 10 ** Math.floor(Math.log10(rawStep));
+  const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(s => s >= rawStep);
+  const top = Math.max(step * 4, step * Math.ceil(max / step));
+  const y = v => T + (H - T - B) * (1 - v / top);
+  const band = (W - L - R) / months.length, bw = Math.min(24, band * 0.6);
+  const ticks = []; for (let v = 0; v <= top + 1e-6; v += step) ticks.push(v);
+  const maxIdx = vals.indexOf(max);
+  const labelEvery = Math.ceil(months.length / 12);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik pendapatan per bulan">
+    ${ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="grid"/><text x="${L - 8}" y="${y(v) + 4}" class="tick" text-anchor="end">${v ? "Rp" + compact(v) : "0"}</text>`).join("")}
+    ${months.map((m, i) => {
+      const v = vals[i], x = L + band * i + (band - bw) / 2, h = (H - T - B) - (y(v) - T), r = Math.min(4, h, bw / 2);
+      const top = y(v), base = H - B;
+      const path = v ? `M${x},${base} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${base} Z` : "";
+      return `<g class="col" data-m="${m}">
+        <rect class="hit" x="${L + band * i}" y="${T}" width="${band}" height="${H - T - B}"/>
+        ${path ? `<path d="${path}" class="bar"/>` : ""}
+        ${i === maxIdx && max ? `<text x="${x + bw / 2}" y="${top - 6}" class="cap" text-anchor="middle">Rp${compact(v)}</text>` : ""}
+        ${i % labelEvery === 0 || i === months.length - 1 ? `<text x="${x + bw / 2}" y="${H - 10}" class="tick" text-anchor="middle">${monthName(m)}</text>` : ""}
+      </g>`;
+    }).join("")}
+    <line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" class="axis"/>
+  </svg><div class="chart-tip" id="chartTip" hidden></div>`;
+}
+
+function renderReport() {
+  if (!$("#reportRange")) return;
+  $("#reportRange").innerHTML = RANGES.map(([l, v]) => `<button class="chip ${S.range === v ? "active" : ""}" data-range="${v}">${l}</button>`).join("");
+  const d = reportData();
+  const revenue = d.paid.reduce((t, o) => t + o.total, 0);
+  const items = d.paid.reduce((t, o) => t + o.items.reduce((s, i) => s + i.qty, 0), 0);
+  const cancelled = d.inRange.filter(o => o.status === "Dibatalkan").length;
+  $("#reportStats").innerHTML = [
+    ["Pendapatan", rupiah(revenue), `${d.paid.length} pesanan dibayar/diproses`],
+    ["Rata-rata per pesanan", rupiah(d.paid.length ? Math.round(revenue / d.paid.length) : 0), "nilai belanja rata-rata"],
+    ["Barang terjual", items.toLocaleString("id-ID"), `${d.prod.length} produk berbeda`],
+    ["Pesanan dibatalkan", cancelled, d.inRange.length ? `${Math.round(cancelled / d.inRange.length * 100)}% dari ${d.inRange.length} pesanan` : "—"],
+  ].map(([t, v, s]) => `<div class="stat"><span>${t}</span><b>${v}</b><small>${s}</small></div>`).join("");
+  $("#chartSub").textContent = `${monthName(d.months[0])} – ${monthName(d.months.at(-1))}`;
+  $("#revChart").innerHTML = revenueChart(d.months, d.byMonth);
+  $("#revTable").innerHTML = `<table class="table compact"><thead><tr><th>Bulan</th><th class="right">Pesanan</th><th class="right">Pendapatan</th></tr></thead><tbody>${d.months.map(m => `<tr><td>${monthName(m)}</td><td class="right">${d.byMonth[m].orders}</td><td class="right">${rupiah(d.byMonth[m].revenue)}</td></tr>`).join("")}</tbody></table>`;
+  const topQty = d.prod[0]?.qty || 1;
+  $("#topProducts").innerHTML = d.prod.length ? `<table class="table compact rank">${d.prod.slice(0, 10).map((p, i) => `<tr>
+      <td class="rank-n">${i + 1}</td>
+      <td>${p.custom ? `<span class="chip-mini">Request</span> ` : ""}${esc(p.nama)}<div class="meter"><i style="width:${(p.qty / topQty) * 100}%"></i></div></td>
+      <td class="right"><b>${p.qty}</b><small>${rupiah(p.revenue)}</small></td></tr>`).join("")}</table>` : `<p class="empty-note">Belum ada penjualan di periode ini.</p>`;
+  const topCat = d.cat[0]?.[1].revenue || 1;
+  $("#topCats").innerHTML = d.cat.length ? `<table class="table compact rank">${d.cat.map(([k, c]) => `<tr>
+      <td>${esc(k)}<div class="meter"><i style="width:${(c.revenue / topCat) * 100}%"></i></div></td>
+      <td class="right"><b>${rupiah(c.revenue)}</b><small>${c.qty} barang</small></td></tr>`).join("")}</table>` : `<p class="empty-note">Belum ada penjualan di periode ini.</p>`;
+  S.report = d;
+}
+$("#reportRange").onclick = e => { const b = e.target.closest("[data-range]"); if (!b) return; const v = b.dataset.range; S.range = isNaN(v) ? v : +v; renderReport(); };
+$("#chartTableToggle").onclick = () => { const t = $("#revTable"); t.hidden = !t.hidden; $("#chartTableToggle").textContent = t.hidden ? "Lihat tabel" : "Sembunyikan tabel"; };
+// Tooltip per kolom
+$("#revChart").addEventListener("mousemove", e => {
+  const g = e.target.closest(".col"), tip = $("#chartTip");
+  document.querySelectorAll("#revChart .col.on").forEach(x => x !== g && x.classList.remove("on"));
+  if (!g) { tip.hidden = true; return; }
+  g.classList.add("on");
+  const m = g.dataset.m, v = S.report.byMonth[m];
+  tip.innerHTML = `<b>${new Date(+m.slice(0, 4), +m.slice(5) - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}</b><span>${rupiah(v.revenue)}</span><small>${v.orders} pesanan</small>`;
+  const box = $("#revChart").getBoundingClientRect();
+  tip.hidden = false;
+  tip.style.left = Math.min(e.clientX - box.left + 14, box.width - tip.offsetWidth - 4) + "px";
+  tip.style.top = Math.max(0, e.clientY - box.top - 60) + "px";
+});
+$("#revChart").addEventListener("mouseleave", () => { $("#chartTip").hidden = true; document.querySelectorAll("#revChart .col.on").forEach(x => x.classList.remove("on")); });
+
+// Ekspor ke Excel (.xlsx asli, lihat xlsx.js)
+const rangeLabel = () => RANGES.find(r => r[1] === S.range)[0].replace(/\s+/g, "-").toLowerCase();
+$("#exportOrders").onclick = () => {
+  const d = S.report || reportData();
+  const rows = [["No. Pesanan", "Tanggal", "Nama", "No. HP", "Alamat", "Produk", "Subtotal", "Diskon", "Kode Promo", "Total", "Metode Bayar", "Status Bayar", "Status Pesanan", "No. Resi"]];
+  d.inRange.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach(o => rows.push([
+    "TSR-" + o.id, new Date(o.created_at).toLocaleString("id-ID"), o.nama, o.hp, o.alamat,
+    o.items.map(i => `${i.custom ? "[Request] " : ""}${i.nama} x${i.qty}`).join(", "),
+    o.subtotal, o.diskon || 0, o.promo || "", o.total, o.pembayaran, BAYAR[o.bayar_status] || "", o.status, o.resi || ""]));
+  Xlsx.download(`tasura-pesanan-${rangeLabel()}.xlsx`, rows, "Pesanan");
+};
+$("#exportProducts").onclick = () => {
+  const d = S.report || reportData();
+  Xlsx.download(`tasura-produk-terlaris-${rangeLabel()}.xlsx`, [["Peringkat", "Produk", "Terjual", "Pendapatan"], ...d.prod.map((p, i) => [i + 1, (p.custom ? "[Request] " : "") + p.nama, p.qty, p.revenue])], "Produk Terlaris");
 };
 
 // ================== RAKITAN REKOMENDASI ==================

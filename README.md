@@ -118,3 +118,19 @@ webhook Poketo yang tanda tangannya sudah diverifikasi.
 6. Dashboard Admin → **Pengaturan** → centang **Aktifkan pembayaran online** → Simpan.
 7. Coba checkout dengan "Bayar Online"; di halaman bayar sandbox klik tombol simulasi lunas.
    Status pesanan berubah menjadi **Lunas** dan **Diproses** secara otomatis.
+
+## Fitur Lanjutan (jalankan `supabase/005_fitur_lanjutan.sql`)
+
+| Fitur | Halaman |
+|---|---|
+| Titik lokasi pengiriman di peta (OpenStreetMap) | Checkout → "Pilih di Peta" |
+| Lacak pesanan untuk tamu (nomor pesanan + nomor WA) | `lacak.html` |
+| Invoice yang bisa dicetak / disimpan PDF | `invoice.html?id=…` (dari Lacak, Akun, atau Dashboard) |
+| Halaman produk sendiri + galeri foto | `produk.html?id=…` |
+| Ulasan pembeli (hanya pesanan Selesai, disetujui admin) | Halaman produk • Dashboard → Ulasan |
+| Notifikasi stok tersedia | Halaman produk (stok habis) • Dashboard → Notifikasi Stok |
+| Bandingkan hingga 3 produk | `bandingkan.html` |
+| Rakitan rekomendasi | `rakit.html` • Dashboard → Rakitan |
+| Laporan penjualan + ekspor Excel (.xlsx) | Dashboard → Laporan |
+
+Urutan file SQL: `schema.sql` → `002_admin.sql` → `003_rakit_pc.sql` → `004_request_komponen.sql` → `005_fitur_lanjutan.sql`.
