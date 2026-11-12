@@ -192,6 +192,7 @@ function waMessage(o, f) {
     (o.diskon ? `\nDiskon (${o.promo}): -${rupiah(o.diskon)}` : "") +
     `\n*${nReq ? "Total sementara" : "Total"}: ${rupiah(o.total)}*` + (nReq ? ` + ${nReq} komponen request (harga menyusul)` : "") +
     `\n\n*Data Pengiriman*\nNama: ${f.nama}\nNo. HP: ${f.hp}\nAlamat: ${f.alamat}\nPembayaran: ${f.bayar}` +
+    (o.id ? `\nLacak pesanan: ${location.origin}${location.pathname.replace(/[^/]*$/, "")}lacak.html?id=${o.id}` : "") +
     (lokasi ? `\nTitik lokasi: ${MapPicker.gmaps(lokasi)}` : "") +
     (f.catatan?.trim() ? `\nCatatan: ${f.catatan.trim()}` : "") + `\n\nTerima kasih 🙏`;
 }

@@ -116,6 +116,7 @@ const Auth = (() => {
         ${o.diskon ? `<div class="row muted"><span>Diskon ${esc(o.promo || "")}</span><span>-${rupiah(o.diskon)}</span></div>` : ""}
         <div class="row"><span>Total</span><b>${rupiah(o.total)}</b></div>
         ${o.resi ? `<div class="row muted"><span>No. Resi</span><b>${esc(o.resi)}</b></div>` : ""}
+        <div class="row"><a class="link" href="lacak.html?id=${o.id}&hp=${encodeURIComponent(o.hp)}">Lacak →</a><a class="link" target="_blank" href="invoice.html?id=${o.id}">🧾 Invoice</a></div>
       </div>`).join("");
   }
 

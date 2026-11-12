@@ -247,6 +247,7 @@ function openOrder(id) {
         <small class="muted">Status <b>Dibatalkan</b> otomatis mengembalikan stok produk dan kuota kupon.</small>
         <button class="btn btn-primary full" type="submit">Simpan Perubahan</button>
         <a class="btn btn-wa-green full" id="waCustomer" target="_blank">💬 Chat Pelanggan via WhatsApp</a>
+        <a class="btn btn-ghost full" target="_blank" href="invoice.html?id=${o.id}">🧾 Lihat / Cetak Invoice</a>
         <button type="button" class="link danger" id="deleteOrder">Hapus pesanan ini</button>
       </form>
     </div>`;
