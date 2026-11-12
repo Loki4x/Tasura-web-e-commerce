@@ -234,6 +234,8 @@ function openOrder(id) {
           <dt>Pembayaran</dt><dd>${esc(o.pembayaran)}</dd>
           <dt>Akun</dt><dd>${cust ? esc(cust.email || cust.nama || "Pelanggan") : "Tamu (tanpa login)"}</dd>
           ${o.catatan ? `<dt>Catatan</dt><dd class="note">${esc(o.catatan)}</dd>` : ""}
+          ${o.lokasi_lat != null ? `<dt>Titik lokasi</dt><dd><a class="link" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${o.lokasi_lat},${o.lokasi_lng}">📍 Buka di Google Maps</a>
+            <iframe class="mini-map" loading="lazy" title="Lokasi pengiriman" src="https://www.openstreetmap.org/export/embed.html?bbox=${o.lokasi_lng - 0.004},${o.lokasi_lat - 0.003},${o.lokasi_lng + 0.004},${o.lokasi_lat + 0.003}&layer=mapnik&marker=${o.lokasi_lat},${o.lokasi_lng}"></iframe></dd>` : ""}
         </dl>
       </div>
       <form class="form-grid order-side" id="orderForm">

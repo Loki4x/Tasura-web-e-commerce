@@ -359,3 +359,17 @@ button.link:hover{text-decoration:underline}
 .req-tag{font-size:.65rem;font-weight:800;background:#7a5d1e;color:#fff;padding:2px 6px;border-radius:5px;vertical-align:2px;text-transform:uppercase}
 .tbd{font-size:.8rem;font-weight:700;color:#7a5d1e}
 .request-note{font-size:.8rem;color:#7a5d1e;background:#fff8e6;padding:8px 10px;border-radius:8px}
+
+/* ====== Titik lokasi (peta) ====== */
+.loc-box{display:grid;gap:8px;border:1px solid var(--line);border-radius:12px;padding:12px}
+.loc-title{font-weight:600;font-size:.88rem}
+.loc-title small{font-weight:400;color:var(--muted);margin-left:4px}
+.loc-panel{display:grid;gap:8px}
+.loc-tools{display:flex;gap:6px;flex-wrap:wrap}
+.loc-tools input{flex:1;min-width:150px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:.88rem}
+.loc-tools .btn.sm,.btn.sm{padding:8px 14px;font-size:.82rem}
+.loc-map{height:260px;border-radius:10px;overflow:hidden;background:var(--gray);z-index:0}
+.loc-help{font-size:.78rem}
+.loc-info{font-size:.85rem;background:var(--gray-bg);border-radius:10px;padding:10px 12px}
+.loc-addr{color:var(--muted);font-size:.8rem;margin-top:4px}
+.loc-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}

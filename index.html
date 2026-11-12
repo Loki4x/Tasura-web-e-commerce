@@ -276,6 +276,20 @@
       <label>Nama Lengkap<input name="nama" required /></label>
       <label>No. WhatsApp<input name="hp" type="tel" required /></label>
       <label>Alamat Lengkap<textarea name="alamat" rows="3" required></textarea></label>
+      <div class="loc-box">
+        <div class="row"><span class="loc-title">📍 Titik Lokasi <small>opsional, agar kurir tidak nyasar</small></span><button type="button" class="link" id="locToggle">Pilih di Peta</button></div>
+        <div class="loc-panel" id="locPanel" hidden>
+          <div class="loc-tools">
+            <input id="locSearch" placeholder="Cari jalan / nama tempat..." />
+            <button type="button" class="btn btn-ghost sm" id="locSearchBtn">Cari</button>
+            <button type="button" class="btn btn-ghost sm" id="locMe">📍 Lokasi Saya</button>
+          </div>
+          <div class="loc-map" id="locMap"></div>
+          <p class="muted loc-help">Klik peta atau geser pin tepat ke titik rumah/kantormu.</p>
+        </div>
+        <div class="loc-info" id="locInfo" hidden></div>
+        <p class="msg error" id="locError" hidden></p>
+      </div>
       <label>Metode Pembayaran
         <select name="bayar">
           <option>Transfer Bank</option><option>E-Wallet (OVO/DANA/GoPay)</option>
@@ -359,6 +373,7 @@
   <script src="config.js"></script>
   <script src="db.js"></script>
   <script src="products.js"></script>
+  <script src="map-picker.js"></script>
   <script src="app.js"></script>
   <script src="auth.js"></script>
 </body>

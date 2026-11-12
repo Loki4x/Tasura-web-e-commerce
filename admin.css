@@ -145,3 +145,4 @@ label.check input{width:18px;height:18px;accent-color:#0a0a0a}
 .price-in input{width:130px;padding:7px 8px;border:1.5px dashed #b9a06a;border-radius:8px;font:inherit;text-align:right;background:#fff}
 .chips .chip-req{border-color:#e8d6a6;background:#fffcf3}
 .chips .chip-req.active{background:#7a5d1e;border-color:#7a5d1e;color:#fff}
+.mini-map{width:100%;height:170px;border:1px solid var(--line);border-radius:10px;margin-top:6px}

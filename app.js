@@ -192,6 +192,7 @@ function waMessage(o, f) {
     (o.diskon ? `\nDiskon (${o.promo}): -${rupiah(o.diskon)}` : "") +
     `\n*${nReq ? "Total sementara" : "Total"}: ${rupiah(o.total)}*` + (nReq ? ` + ${nReq} komponen request (harga menyusul)` : "") +
     `\n\n*Data Pengiriman*\nNama: ${f.nama}\nNo. HP: ${f.hp}\nAlamat: ${f.alamat}\nPembayaran: ${f.bayar}` +
+    (lokasi ? `\nTitik lokasi: ${MapPicker.gmaps(lokasi)}` : "") +
     (f.catatan?.trim() ? `\nCatatan: ${f.catatan.trim()}` : "") + `\n\nTerima kasih 🙏`;
 }
 
@@ -206,10 +207,15 @@ $("#checkoutForm").onsubmit = async e => {
   try {
     let order;
     if (useDb) {
-      const { data, error } = await db.rpc("place_order", {
+      const args = {
         p_items: cart.map(i => i.custom ? { custom: true, slot: i.slot, nama: i.nama, qty: i.qty } : { id: i.id, qty: i.qty }), p_nama: f.nama, p_hp: f.hp, p_alamat: f.alamat,
         p_pembayaran: f.bayar, p_promo: f.promo || null, p_catatan: f.catatan || null,
-      });
+      };
+      let { data, error } = await db.rpc("place_order", lokasi ? { ...args, p_lat: lokasi.lat, p_lng: lokasi.lng } : args);
+      if (error && lokasi && (error.code === "PGRST202" || /function/i.test(error.message))) {
+        // database belum diperbarui (005): simpan titik lokasi di catatan
+        ({ data, error } = await db.rpc("place_order", { ...args, p_catatan: [f.catatan, `Titik lokasi: ${MapPicker.gmaps(lokasi)}`].filter(Boolean).join(" | ").slice(0, 500) }));
+      }
       if (error) throw new Error(requestCount() && /tidak tersedia/.test(error.message)
         ? "Komponen request belum bisa diproses (database belum diperbarui). Silakan pesan lewat tombol Konsultasi WhatsApp di halaman Rakit PC."
         : error.message);
@@ -223,6 +229,7 @@ $("#checkoutForm").onsubmit = async e => {
     if (waTab) waTab.location.href = url; else location.href = url;
     cart = []; saveCart(); form.reset(); promoState = { kode: "", diskon: 0, valid: false };
     localStorage.removeItem("tasura_checkout_note");
+    MapPicker.clear(); $("#locPanel").hidden = true; $("#locToggle").textContent = "Pilih di Peta";
     $("#checkoutModal").classList.remove("show");
     toast(order.id ? `Pesanan #TSR-${order.id} dibuat 🎉` : "Pesanan dikirim ke WhatsApp 🎉");
     if (useDb) loadStore(); // perbarui stok
@@ -234,6 +241,41 @@ $("#checkoutForm").onsubmit = async e => {
     btn.disabled = false; btn.textContent = "Pesan via WhatsApp";
   }
 };
+
+// ====== Titik lokasi pengiriman ======
+let lokasi = null;
+function renderLoc(v) {
+  lokasi = v;
+  const box = $("#locInfo");
+  box.hidden = !v;
+  if (!v) return;
+  box.innerHTML = `<b>📍 Titik dipilih</b> <span class="muted">${v.lat}, ${v.lng}</span>
+    ${v.alamat ? `<div class="loc-addr">${esc(v.alamat)}</div>` : ""}
+    <div class="loc-actions"><a href="${MapPicker.gmaps(v)}" target="_blank" rel="noopener" class="link">Cek di Google Maps</a>
+    ${v.alamat ? `<button type="button" class="link" id="locFill">Salin ke kolom alamat</button>` : ""}
+    <button type="button" class="link danger" id="locClear">Hapus titik</button></div>`;
+}
+const locErr = m => { $("#locError").textContent = m || ""; $("#locError").hidden = !m; };
+$("#locToggle").onclick = async () => {
+  const panel = $("#locPanel");
+  panel.hidden = !panel.hidden;
+  $("#locToggle").textContent = panel.hidden ? "Pilih di Peta" : "Tutup Peta";
+  if (!panel.hidden) {
+    locErr("");
+    try { await MapPicker.mount($("#locMap"), lokasi, renderLoc); } catch (e) { locErr(e.message); }
+  }
+};
+const doLocSearch = async () => {
+  const q = $("#locSearch").value.trim(); if (!q) return;
+  locErr(""); try { await MapPicker.search(q); } catch (e) { locErr(e.message || "Pencarian gagal"); }
+};
+$("#locSearchBtn").onclick = doLocSearch;
+$("#locSearch").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doLocSearch(); } });
+$("#locMe").onclick = async () => { locErr(""); try { await MapPicker.myLocation(); } catch (e) { locErr(e.message); } };
+$("#locInfo").addEventListener("click", e => {
+  if (e.target.id === "locClear") MapPicker.clear();
+  if (e.target.id === "locFill") $("#checkoutForm").alamat.value = lokasi.alamat;
+});
 
 $("#loginFromCheckout").onclick = e => { e.preventDefault(); $("#checkoutModal").classList.remove("show"); Auth.openAuth(); };
 const setWaLinks = () => document.querySelectorAll(".waLink").forEach(a => { a.href = `https://wa.me/${STORE.whatsapp}`; a.target = "_blank"; });
