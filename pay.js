@@ -3,7 +3,7 @@
 // Status lunas hanya ditentukan oleh webhook "poketo-webhook", bukan oleh browser.
 const Pay = (() => {
   let enabled = false;
-  const fnUrl = () => SUPABASE_CONFIG.url.replace(/\/+$/, "") + "/functions/v1/poketo-checkout";
+  const fnUrl = () => SUPABASE_CONFIG.url.replace(/\/+$/, "") + "/functions/v1/" + (SUPABASE_CONFIG.poketoCheckoutFunction || "poketo-checkout");
 
   // Metode pembayaran Poketo (cadangan bila API belum bisa dihubungi; angka sesuai dokumentasi Poketo)
   const METHODS = [

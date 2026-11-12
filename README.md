@@ -109,11 +109,14 @@ webhook Poketo yang tanda tangannya sudah diverifikasi.
    - `poketo-checkout` ← `supabase/functions/poketo-checkout/index.ts`
    - `poketo-webhook` ← `supabase/functions/poketo-webhook/index.ts`
    Untuk **keduanya**, matikan **Verify JWT / Enforce JWT verification** di pengaturan fungsi.
+   **Catat alamat (URL) tiap fungsi** di kolom URL daftar Edge Functions — Supabase bisa memberi alamat
+   acak (mis. `…/functions/v1/dynamic-api`). Isi slug fungsi checkout di `config.js`
+   (`poketoCheckoutFunction`), dan pakai URL lengkap fungsi webhook untuk langkah 5.
 4. Di **Supabase → Edge Functions → Secrets**, tambahkan:
    - `POKETO_SECRET_KEY` = `sk_test_…` (nanti ganti `sk_live_…` setelah verifikasi Poketo)
    - `POKETO_WEBHOOK_SECRET` = `whsec_…` (langkah 5)
    - `SITE_URL` = `https://tasura-web.vercel.app`
-5. Di **Poketo** → Pengaturan API → URL webhook: `https://<project-id>.supabase.co/functions/v1/poketo-webhook`,
+5. Di **Poketo** → Pengaturan API → URL webhook: salin **URL lengkap fungsi webhook** dari daftar Edge Functions,
    lalu salin rahasia `whsec_…` ke secret `POKETO_WEBHOOK_SECRET`.
 6. Dashboard Admin → **Pengaturan** → centang **Aktifkan pembayaran online** → Simpan.
 7. Coba checkout dengan "Bayar Online"; di halaman bayar sandbox klik tombol simulasi lunas.
