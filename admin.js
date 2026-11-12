@@ -135,13 +135,13 @@ function renderSummary() {
   $("#todayText").textContent = now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   $("#statCards").innerHTML = [
     ["Pendapatan Bulan Ini", rupiah(revenue), "Pesanan diproses, dikirim & selesai"],
-    ["Perlu Dikonfirmasi", waiting, "Pesanan menunggu konfirmasi", waiting ? "alert" : ""],
+    ["Perlu Dikonfirmasi", waiting, (() => { const n = S.orders.filter(o => pendingReq(o) && o.status !== "Dibatalkan").length; return n ? `${n} berisi komponen yang perlu dicarikan` : "Pesanan menunggu konfirmasi"; })(), waiting ? "alert" : ""],
     ["Perlu Dikirim", shipping, "Pesanan berstatus diproses"],
     ["Pesanan Bulan Ini", thisMonth.length, `${S.products.filter(p => p.aktif).length} produk aktif • ${S.customers.length} pelanggan`],
   ].map(([t, v, s, cls]) => `<div class="stat ${cls || ""}"><span>${t}</span><b>${v}</b><small>${s}</small></div>`).join("");
   const recent = S.orders.slice(0, 6);
   $("#recentOrders").innerHTML = recent.length ? `<table class="table compact">${recent.map(o => `
-    <tr data-order="${o.id}"><td><b>#TSR-${o.id}</b><small>${fmtDate(o.created_at)}</small></td><td>${esc(o.nama)}</td><td>${rupiah(o.total)}</td><td>${badge(o.status)}</td></tr>`).join("")}</table>`
+    <tr data-order="${o.id}"><td><b>#TSR-${o.id}</b><small>${fmtDate(o.created_at)}</small></td><td>${esc(o.nama)} ${reqBadge(o)}</td><td>${rupiah(o.total)}</td><td>${badge(o.status)}</td></tr>`).join("")}</table>`
     : `<p class="empty-note">Belum ada pesanan.</p>`;
   $("#lowStock").innerHTML = low.length ? `<table class="table compact">${low.slice(0, 8).map(p => `
     <tr data-product="${p.id}"><td>${esc(p.nama)}</td><td class="right"><span class="stock-pill ${p.stok <= 0 ? "out" : "low"}">${p.stok <= 0 ? "Habis" : "Sisa " + p.stok}</span></td></tr>`).join("")}</table>`
@@ -151,17 +151,19 @@ function renderSummary() {
 // ================== PESANAN ==================
 function renderOrders() {
   const counts = Object.fromEntries(STATUSES.map(s => [s, S.orders.filter(o => o.status === s).length]));
+  const nReq = S.orders.filter(o => pendingReq(o) && o.status !== "Dibatalkan").length;
   $("#orderFilters").innerHTML = ["Semua", ...STATUSES].map(s =>
-    `<button class="chip ${S.orderFilter === s ? "active" : ""}" data-of="${s}">${s} <small>${s === "Semua" ? S.orders.length : counts[s]}</small></button>`).join("");
+    `<button class="chip ${S.orderFilter === s ? "active" : ""}" data-of="${s}">${s} <small>${s === "Semua" ? S.orders.length : counts[s]}</small></button>`).join("") +
+    (nReq || S.orderFilter === "Request" ? `<button class="chip chip-req ${S.orderFilter === "Request" ? "active" : ""}" data-of="Request">🛠 Perlu Dicarikan <small>${nReq}</small></button>` : "");
   const q = $("#orderSearch").value.trim().toLowerCase().replace("#tsr-", "");
-  const list = S.orders.filter(o => (S.orderFilter === "Semua" || o.status === S.orderFilter) &&
+  const list = S.orders.filter(o => (S.orderFilter === "Semua" || o.status === S.orderFilter || (S.orderFilter === "Request" && pendingReq(o) && o.status !== "Dibatalkan")) &&
     (!q || [o.id, o.nama, o.hp].join(" ").toLowerCase().includes(q)));
   $("#ordersTable").innerHTML = `<thead><tr><th>No. Pesanan</th><th>Pelanggan</th><th>Produk</th><th>Total</th><th>Pembayaran</th><th>Status</th></tr></thead><tbody>` +
     (list.length ? list.map(o => `
       <tr data-order="${o.id}" class="clickable">
         <td><b>#TSR-${o.id}</b><small>${fmtDate(o.created_at)}</small></td>
         <td>${esc(o.nama)}<small>${esc(o.hp)}${o.user_id ? "" : " • Tamu"}</small></td>
-        <td>${o.items.length} item<small>${esc(o.items[0]?.nama || "")}${o.items.length > 1 ? " +" + (o.items.length - 1) : ""}</small></td>
+        <td>${o.items.length} item ${reqBadge(o)}<small>${esc(o.items[0]?.nama || "")}${o.items.length > 1 ? " +" + (o.items.length - 1) : ""}</small></td>
         <td><b>${rupiah(o.total)}</b>${o.promo ? `<small>${esc(o.promo)}</small>` : ""}</td>
         <td>${esc(o.pembayaran)}</td>
         <td>${badge(o.status)}${o.resi ? `<small>Resi ${esc(o.resi)}</small>` : ""}</td>
@@ -174,10 +176,32 @@ document.addEventListener("click", e => {
   const p = e.target.closest("[data-product]"); if (p && !e.target.closest("button,input,label")) openProduct(+p.dataset.product);
 });
 
+// ---- Komponen request (dari Rakit PC) ----
+const hasReq = o => o.items.some(i => i.custom);
+const pendingReq = o => o.items.some(i => i.custom && !i.harga);
+const reqBadge = o => hasReq(o) ? `<span class="req-badge ${pendingReq(o) ? "" : "done"}">${pendingReq(o) ? "🛠 Perlu dicarikan" : "🛠 Request ✓"}</span>` : "";
+const searchLinks = q => {
+  const e = encodeURIComponent(q);
+  return `<span class="search-links">Cari di:
+    <a href="https://www.tokopedia.com/search?st=product&q=${e}" target="_blank" rel="noopener">Tokopedia</a>
+    <a href="https://shopee.co.id/search?keyword=${e}" target="_blank" rel="noopener">Shopee</a>
+    <a href="https://www.google.com/search?tbm=shop&q=${e}" target="_blank" rel="noopener">Google</a></span>`;
+};
+// Hitung ulang subtotal & total dari harga yang diisi admin untuk item request
+function repriced(o, form) {
+  const items = o.items.map((i, idx) => i.custom ? { ...i, harga: Math.max(0, Number(form[`req_${idx}`]?.value) || 0) } : i);
+  const subtotal = items.reduce((t, i) => t + i.harga * i.qty, 0);
+  return { items, subtotal, total: Math.max(0, subtotal - (o.diskon || 0)) };
+}
+
 function customerMsg(o) {
   const head = `Halo ${o.nama}, ini dari Tasura mengenai pesanan *#TSR-${o.id}* (${rupiah(o.total)}).`;
   return {
-    "Menunggu Konfirmasi": `${head}\nPesananmu sudah kami terima dan sedang kami cek ketersediaannya.`,
+    "Menunggu Konfirmasi": hasReq(o)
+      ? `${head}\nBerikut harga komponen request yang sudah kami carikan:\n` +
+        o.items.filter(i => i.custom).map(i => `• ${i.slot ? i.slot + ": " : ""}${i.nama} x${i.qty} = ${i.harga ? rupiah(i.harga * i.qty) : "masih kami carikan"}`).join("\n") +
+        `\n\n*Total pesanan menjadi ${rupiah(o.total)}*. Jika setuju, mohon konfirmasi agar kami proses ya 🙏`
+      : `${head}\nPesananmu sudah kami terima dan sedang kami cek ketersediaannya.`,
     "Diproses": `${head}\nPesanan sudah dikonfirmasi dan sedang kami siapkan. 🙏`,
     "Dikirim": `${head}\nPesananmu sudah dikirim! 🚚${o.resi ? `\nNo. resi: *${o.resi}*` : ""}`,
     "Selesai": `${head}\nTerima kasih sudah berbelanja di Tasura! Semoga puas dengan produknya 🙌`,
@@ -193,10 +217,14 @@ function openOrder(id) {
     <div class="order-grid">
       <div>
         <h4>Produk</h4>
-        <table class="table compact">${o.items.map(i => `<tr><td>${esc(i.nama)}<small>${rupiah(i.harga)} × ${i.qty}</small></td><td class="right">${rupiah(i.harga * i.qty)}</td></tr>`).join("")}
-          <tr><td>Subtotal</td><td class="right">${rupiah(o.subtotal)}</td></tr>
+        ${hasReq(o) ? `<p class="req-help">🛠 Pesanan ini berisi komponen <b>request</b>. Cari komponennya di toko lain, isi harga jualnya, lalu klik <b>Simpan</b> dan kabari pelanggan.</p>` : ""}
+        <table class="table compact">${o.items.map((i, idx) => i.custom ? `
+          <tr class="req-row"><td><span class="req-tag">Request</span> ${esc(i.slot ? i.slot + ": " : "")}<b>${esc(i.nama)}</b> × ${i.qty}${searchLinks(i.nama)}</td>
+            <td class="right"><label class="price-in">Rp<input type="number" min="0" step="1000" name="req_${idx}" form="orderForm" value="${i.harga || ""}" placeholder="Harga satuan" /></label></td></tr>`
+          : `<tr><td>${esc(i.nama)}<small>${rupiah(i.harga)} × ${i.qty}</small></td><td class="right">${rupiah(i.harga * i.qty)}</td></tr>`).join("")}
+          <tr><td>Subtotal</td><td class="right" id="oSubtotal">${rupiah(o.subtotal)}</td></tr>
           ${o.diskon ? `<tr><td>Diskon <span class="chip-mini">${esc(o.promo || "")}</span></td><td class="right">-${rupiah(o.diskon)}</td></tr>` : ""}
-          <tr class="total-row"><td><b>Total</b></td><td class="right"><b>${rupiah(o.total)}</b></td></tr>
+          <tr class="total-row"><td><b>Total</b></td><td class="right"><b id="oTotal">${rupiah(o.total)}</b></td></tr>
         </table>
         <h4>Pengiriman</h4>
         <dl class="dl">
@@ -221,13 +249,19 @@ function openOrder(id) {
       </form>
     </div>`;
   const form = $("#orderForm");
-  const updateWa = () => { $("#waCustomer").href = `https://wa.me/${toWa(o.hp)}?text=${encodeURIComponent(customerMsg({ ...o, status: form.status.value, resi: form.resi.value.trim() }))}`; };
+  const updateWa = () => {
+    const r = hasReq(o) ? repriced(o, form) : {};
+    if (hasReq(o)) { $("#oSubtotal").textContent = rupiah(r.subtotal); $("#oTotal").textContent = rupiah(r.total); }
+    $("#waCustomer").href = `https://wa.me/${toWa(o.hp)}?text=${encodeURIComponent(customerMsg({ ...o, ...r, status: form.status.value, resi: form.resi.value.trim() }))}`;
+  };
   updateWa(); form.status.onchange = updateWa; form.resi.oninput = updateWa;
+  $$("[name^=req_]").forEach(i => i.oninput = updateWa);
   form.onsubmit = async e => {
     e.preventDefault();
     const btn = form.querySelector("button[type=submit]"); busy(btn, true);
     const prevStatus = o.status;
-    const upd = { status: form.status.value, resi: form.resi.value.trim() || null, catatan_admin: form.catatan_admin.value.trim() || null };
+    const upd = { status: form.status.value, resi: form.resi.value.trim() || null, catatan_admin: form.catatan_admin.value.trim() || null,
+      ...(hasReq(o) ? repriced(o, form) : {}) };
     const { data, error } = await db.from("orders").update(upd).eq("id", o.id).select().single();
     busy(btn, false);
     if (error) return toast("Gagal menyimpan: " + error.message);

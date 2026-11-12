@@ -31,7 +31,7 @@
     <div class="container">
       <span class="eyebrow">PC Builder</span>
       <h1>Rakit PC Impianmu</h1>
-      <p>Pilih komponen satu per satu. Tasura otomatis mengecek kecocokan socket, tipe RAM, ukuran casing, panjang VGA, dan daya PSU.</p>
+      <p>Pilih komponen dari daftar produk Tasura. Tasura otomatis mengecek kecocokan socket, tipe RAM, ukuran casing, panjang VGA, dan daya PSU. Komponen yang kamu mau tidak ada? Tulis saja, nanti kami carikan.</p>
     </div>
   </section>
 
@@ -47,7 +47,8 @@
     <aside class="summary-card" id="summary">
       <h3>Ringkasan Rakitan</h3>
       <div id="sumItems"></div>
-      <div class="sum-total"><span>Total</span><b id="sumTotal">Rp0</b></div>
+      <div class="sum-total"><span id="sumLabel">Total</span><b id="sumTotal">Rp0</b></div>
+      <p class="sum-note" id="sumNote" hidden></p>
       <div class="sum-watt" id="sumWatt"></div>
       <h4>Cek Kompatibilitas</h4>
       <ul class="checks-list" id="checkList"></ul>
@@ -63,18 +64,6 @@
   <div class="mobile-bar" id="mobileBar">
     <div><small>Total rakitan</small><b id="mbTotal">Rp0</b></div>
     <button class="btn btn-primary" id="mbGo">Lihat Ringkasan</button>
-  </div>
-
-  <!-- Modal pilih komponen -->
-  <div class="modal" id="pickModal">
-    <div class="modal-box pick-box">
-      <div class="drawer-head"><h3 id="pickTitle">Pilih Komponen</h3><button class="icon-btn" data-close-pick>✕</button></div>
-      <div class="pick-tools">
-        <input type="search" class="pick-search" id="pickSearch" placeholder="Cari..." />
-        <label class="check"><input type="checkbox" id="onlyCompat" checked /> Hanya yang cocok</label>
-      </div>
-      <div class="pick-list" id="pickList"></div>
-    </div>
   </div>
 
   <div class="toast" id="toast"></div>

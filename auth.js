@@ -112,7 +112,7 @@ const Auth = (() => {
       <div class="order">
         <div class="row"><b>#TSR-${o.id}</b><span class="status s-${esc(o.status.split(" ")[0].toLowerCase())}">${esc(o.status)}</span></div>
         <span class="muted">${new Date(o.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })} • ${esc(o.pembayaran)}</span>
-        <ul>${o.items.map(i => `<li>${esc(i.nama)} ×${i.qty}<span>${rupiah(i.harga * i.qty)}</span></li>`).join("")}</ul>
+        <ul>${o.items.map(i => `<li>${i.custom ? `<span class="req-tag">Request</span> ${esc(i.slot ? i.slot + ": " : "")}` : ""}${esc(i.nama)} ×${i.qty}<span>${i.custom && !i.harga ? "Harga menyusul" : rupiah(i.harga * i.qty)}</span></li>`).join("")}</ul>
         ${o.diskon ? `<div class="row muted"><span>Diskon ${esc(o.promo || "")}</span><span>-${rupiah(o.diskon)}</span></div>` : ""}
         <div class="row"><span>Total</span><b>${rupiah(o.total)}</b></div>
         ${o.resi ? `<div class="row muted"><span>No. Resi</span><b>${esc(o.resi)}</b></div>` : ""}

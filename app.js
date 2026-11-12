@@ -57,27 +57,37 @@ function showDetail(id) {
 function saveCart() { localStorage.setItem("tasura_cart", JSON.stringify(cart)); renderCart(); }
 function addToCart(id) {
   const p = findP(id); if (!p) return;
-  const item = cart.find(i => i.id === id);
+  const item = cart.find(i => !i.custom && i.id === id);
   if (p.stok !== undefined && (item?.qty || 0) + 1 > p.stok) return toast(habis(p) ? "Stok habis" : `Stok tersisa ${p.stok}`);
   item ? item.qty++ : cart.push({ id, qty: 1 });
   saveCart();
   toast("✓ Ditambahkan ke keranjang");
 }
-const cartTotal = () => cart.reduce((s, i) => s + (findP(i.id)?.harga || 0) * i.qty, 0);
+const cartTotal = () => cart.reduce((s, i) => s + (i.custom ? 0 : (findP(i.id)?.harga || 0) * i.qty), 0);
+const cartKey = i => i.custom ? i.key : String(i.id);
+const requestCount = () => cart.filter(i => i.custom).length;
 
 function renderCart() {
-  cart = cart.filter(i => findP(i.id)); // buang produk yang sudah tidak dijual
+  cart = cart.filter(i => i.custom || findP(i.id)); // buang produk yang sudah tidak dijual
   $("#cartCount").textContent = cart.reduce((s, i) => s + i.qty, 0);
-  $("#cartTotal").textContent = rupiah(cartTotal());
+  $("#cartTotal").textContent = rupiah(cartTotal()) + (requestCount() ? ` + ${requestCount()} request` : "");
   if (!cart.length) { $("#cartItems").innerHTML = `<div class="cart-empty">🛒<br/>Keranjangmu masih kosong</div>`; return; }
   $("#cartItems").innerHTML = cart.map(i => {
+    const k = esc(cartKey(i));
+    if (i.custom) return `<div class="ci is-req">
+      <div class="ci-thumb">🛠️</div>
+      <div class="ci-info"><h4><span class="req-tag">Request</span> ${esc(i.slot ? i.slot + ": " : "")}${esc(i.nama)}</h4><b class="tbd">Harga menyusul</b>
+        <div class="qty"><button data-dec="${k}">−</button>${i.qty}<button data-inc="${k}">+</button></div>
+      </div>
+      <button class="remove" data-rm="${k}">Hapus</button>
+    </div>`;
     const p = findP(i.id);
     return `<div class="ci">
       <div class="ci-thumb">${thumbHTML(p)}</div>
       <div class="ci-info"><h4>${esc(p.nama)}</h4><b>${rupiah(p.harga)}</b>
-        <div class="qty"><button data-dec="${p.id}">−</button>${i.qty}<button data-inc="${p.id}">+</button></div>
+        <div class="qty"><button data-dec="${k}">−</button>${i.qty}<button data-inc="${k}">+</button></div>
       </div>
-      <button class="remove" data-rm="${p.id}">Hapus</button>
+      <button class="remove" data-rm="${k}">Hapus</button>
     </div>`;
   }).join("");
 }
@@ -114,6 +124,9 @@ function renderSummary() {
   $("#discountRow").hidden = !promoState.diskon;
   $("#modalDiscount").textContent = "-" + rupiah(promoState.diskon);
   $("#modalTotal").textContent = rupiah(sub - promoState.diskon);
+  const n = requestCount();
+  $("#requestNote").hidden = !n;
+  $("#requestNote").textContent = `+ ${n} komponen request (harga menyusul, dikonfirmasi admin via WhatsApp)`;
   const m = $("#promoMsg");
   m.hidden = !promoState.pesan;
   m.textContent = promoState.pesan || "";
@@ -130,10 +143,15 @@ document.addEventListener("click", e => {
   else if (d.cat) { activeCat = d.cat; renderCategories(); renderProducts(); }
   else if (d.close !== undefined) $("#detailModal").classList.remove("show");
   else {
-    const id = +(d.inc || d.dec || d.rm), item = cart.find(i => i.id === id);
-    if (d.inc) item.qty++;
+    const k = d.inc || d.dec || d.rm, item = cart.find(i => cartKey(i) === k);
+    if (!item) return;
+    if (d.inc) {
+      const p = !item.custom && findP(item.id);
+      if (p && p.stok !== undefined && item.qty + 1 > p.stok) return toast(`Stok tersisa ${p.stok}`);
+      item.qty++;
+    }
     if (d.dec) item.qty--;
-    if (d.rm || item.qty < 1) cart = cart.filter(i => i.id !== id);
+    if (d.rm || item.qty < 1) cart = cart.filter(i => i !== item);
     saveCart();
   }
 });
@@ -166,10 +184,14 @@ $("#checkoutForm").promo.addEventListener("input", e => {
 });
 
 function waMessage(o, f) {
-  const items = o.items.map((i, n) => `${n + 1}. ${i.nama} x${i.qty} = ${rupiah(i.harga * i.qty)}`).join("\n");
+  const items = o.items.map((i, n) => i.custom
+    ? `${n + 1}. *[REQUEST]* ${i.slot ? i.slot + ": " : ""}${i.nama} x${i.qty} = harga menyusul (mohon dicarikan)`
+    : `${n + 1}. ${i.nama} x${i.qty} = ${rupiah(i.harga * i.qty)}`).join("\n");
+  const nReq = o.items.filter(i => i.custom).length;
   return `Halo *${STORE.nama}*, saya mau pesan${o.id ? ` (No. Pesanan *#TSR-${o.id}*)` : ""}:\n\n${items}\n\nSubtotal: ${rupiah(o.subtotal)}` +
     (o.diskon ? `\nDiskon (${o.promo}): -${rupiah(o.diskon)}` : "") +
-    `\n*Total: ${rupiah(o.total)}*\n\n*Data Pengiriman*\nNama: ${f.nama}\nNo. HP: ${f.hp}\nAlamat: ${f.alamat}\nPembayaran: ${f.bayar}` +
+    `\n*${nReq ? "Total sementara" : "Total"}: ${rupiah(o.total)}*` + (nReq ? ` + ${nReq} komponen request (harga menyusul)` : "") +
+    `\n\n*Data Pengiriman*\nNama: ${f.nama}\nNo. HP: ${f.hp}\nAlamat: ${f.alamat}\nPembayaran: ${f.bayar}` +
     (f.catatan?.trim() ? `\nCatatan: ${f.catatan.trim()}` : "") + `\n\nTerima kasih 🙏`;
 }
 
@@ -185,15 +207,17 @@ $("#checkoutForm").onsubmit = async e => {
     let order;
     if (useDb) {
       const { data, error } = await db.rpc("place_order", {
-        p_items: cart.map(i => ({ id: i.id, qty: i.qty })), p_nama: f.nama, p_hp: f.hp, p_alamat: f.alamat,
+        p_items: cart.map(i => i.custom ? { custom: true, slot: i.slot, nama: i.nama, qty: i.qty } : { id: i.id, qty: i.qty }), p_nama: f.nama, p_hp: f.hp, p_alamat: f.alamat,
         p_pembayaran: f.bayar, p_promo: f.promo || null, p_catatan: f.catatan || null,
       });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(requestCount() && /tidak tersedia/.test(error.message)
+        ? "Komponen request belum bisa diproses (database belum diperbarui). Silakan pesan lewat tombol Konsultasi WhatsApp di halaman Rakit PC."
+        : error.message);
       order = data;
       Auth.saveProfile(f);
     } else {
       const sub = cartTotal();
-      order = { items: cart.map(i => ({ ...findP(i.id), qty: i.qty })), subtotal: sub, diskon: promoState.diskon, promo: promoState.kode, total: sub - promoState.diskon };
+      order = { items: cart.map(i => i.custom ? { ...i, harga: 0 } : { ...findP(i.id), qty: i.qty }), subtotal: sub, diskon: promoState.diskon, promo: promoState.kode, total: sub - promoState.diskon };
     }
     const url = `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(waMessage(order, f))}`;
     if (waTab) waTab.location.href = url; else location.href = url;

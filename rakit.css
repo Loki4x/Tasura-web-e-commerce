@@ -8,7 +8,6 @@
 .slots-head h2{font-size:1.3rem}
 #slotList{display:grid;gap:12px}
 .slot{display:grid;grid-template-columns:64px 1fr auto;gap:16px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;transition:.2s;border-left:4px solid var(--line)}
-.slot[data-slot]:not(.ok):not(.bad):not(.warn){cursor:pointer}
 .slot:hover{box-shadow:0 6px 20px rgba(0,0,0,.06)}
 .slot.ok{border-left-color:#1f9d55}
 .slot.warn{border-left-color:#e3a008}
@@ -17,9 +16,9 @@
 .slot-icon{width:64px;height:64px;border-radius:14px;background:var(--gray);display:grid;place-items:center;font-size:2rem;overflow:hidden}
 .slot-icon img{width:100%;height:100%;object-fit:cover}
 .slot-label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:8px}
-.req,.opt{font-size:.65rem;padding:2px 8px;border-radius:99px;letter-spacing:.5px}
-.req{background:var(--black);color:#fff}
-.opt{background:var(--gray);color:var(--muted)}
+.tag-wajib,.tag-opsional{font-size:.65rem;padding:2px 8px;border-radius:99px;letter-spacing:.5px}
+.tag-wajib{background:var(--black);color:#fff}
+.tag-opsional{background:var(--gray);color:var(--muted)}
 .slot-name{font-weight:700;margin:2px 0 6px}
 .slot-empty{color:var(--soft);margin-top:4px}
 .slot-side{display:grid;justify-items:end;gap:6px;text-align:right}
@@ -56,21 +55,18 @@
 .assemble small{grid-column:2;font-weight:400;color:var(--muted);font-size:.78rem}
 .check{display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer}
 
-/* Picker */
-.pick-box{width:min(760px,100%);max-height:88vh;display:flex;flex-direction:column;gap:0;padding-bottom:0}
-.pick-box>*{margin-inline:0!important}
-.pick-tools{display:flex;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.pick-search{flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font:inherit}
-.pick-list{overflow:auto;padding:12px 20px 20px;display:grid;gap:10px}
-.pick-item{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:12px}
-.pick-item.current{border:2px solid var(--black)}
-.pick-item.bad{background:#fffafa}
-.pick-item.soldout{opacity:.55}
-.pick-thumb{width:64px;height:64px;border-radius:12px;background:var(--gray);display:grid;place-items:center;font-size:2rem;overflow:hidden}
-.pick-thumb img{width:100%;height:100%;object-fit:cover}
-.pick-info b{display:block;margin-bottom:6px}
-.pick-side{display:grid;justify-items:end;gap:6px;text-align:right}
-.pick-side s{font-size:.78rem;color:var(--muted)}
+/* Daftar komponen & request */
+.part-select{width:100%;margin-top:8px;padding:11px 40px 11px 14px;border:1px solid var(--line);border-radius:12px;font:inherit;font-size:.92rem;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;appearance:none;cursor:pointer;color:var(--text)}
+.part-select:focus,.part-custom:focus{outline:2px solid var(--black);border-color:transparent}
+.part-custom{width:100%;margin-top:8px;padding:11px 14px;border:1.5px dashed #b9a06a;border-radius:12px;font:inherit;font-size:.92rem;background:#fffcf3}
+.slot.req{border-left-color:#b9a06a;background:#fffdf7}
+.slot-issue.req{color:#7a5d1e;font-weight:500}
+.tbd{font-size:.85rem;font-weight:700;color:#7a5d1e;background:#fff4dc;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.sum-row.is-req em{font-style:normal;font-weight:700;color:#7a5d1e}
+.sum-row.is-req span:last-child{color:#7a5d1e}
+.sum-note{font-size:.8rem;color:#7a5d1e;background:#fff8e6;padding:8px 12px;border-radius:10px;margin-top:-6px}
+.checks-list .req{color:#7a5d1e}.checks-list .req span{background:#fff4dc;font-size:.65rem}
+.slot-main{min-width:0}
 
 /* Mobile bar */
 .mobile-bar{display:none}
@@ -85,9 +81,6 @@
   .slot{grid-template-columns:52px 1fr;gap:12px}
   .slot-icon{width:52px;height:52px;font-size:1.6rem}
   .slot-side{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;justify-items:unset}
-  .pick-item{grid-template-columns:52px 1fr}
-  .pick-thumb{width:52px;height:52px}
-  .pick-side{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}
   .builder-hero{padding:44px 0 40px}
 }
 @media(max-width:900px){
