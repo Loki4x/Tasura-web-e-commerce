@@ -404,3 +404,13 @@ textarea.flash{animation:flashBg 1.2s ease}
 .pay-group-head{display:grid;gap:1px}
 .pay-group-head b{font-size:.86rem}
 .pay-group-head small{font-size:.76rem;color:var(--muted)}
+
+.pay-auto{grid-template-areas:"r i t f" ". c c c"}
+.pay-auto>input{grid-area:r}.pay-auto>.pay-ico{grid-area:i}.pay-auto>.pay-txt{grid-area:t}.pay-auto>.pay-fee{grid-area:f}
+.pay-chips{grid-area:c;display:flex;flex-wrap:wrap;gap:6px}
+.pay-chip{font-size:.74rem;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.pay-chip.off{opacity:.5;text-decoration:line-through}
+.pay-chip i{font-style:normal;text-decoration:none}
+.pay-auto+.pay-manual{margin-top:12px}
+@media(max-width:480px){.pay-auto{grid-template-areas:"r t f" ". c c"}}
+#feeVal,#payTotal{white-space:nowrap}

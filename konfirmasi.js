@@ -14,19 +14,22 @@ function actionBox() {
   if (O.status === "Dibatalkan") return `<div class="action-box"><h3>Pesanan dibatalkan</h3><p class="muted">Hubungi admin bila ada pertanyaan.</p><a class="btn btn-wa-green" target="_blank" href="${waLink()}">💬 Hubungi Admin</a></div>`;
 
   if (isPoketo() && !unpriced) {
-    const fee = M?.fee, total = M?.totalAmount;
+    // Pesanan lama menyimpan satu metode (fee), pesanan baru menyimpan kisaran biaya (feeMin–feeMax)
+    const lo = M?.feeMin ?? M?.fee, hi = M?.feeMax ?? M?.fee, single = M?.code && M.code !== "AUTO";
+    const range = (a, b) => a === b ? rupiah(a) : `${rupiah(a)} – ${rupiah(b)}`;
+    const label = single ? esc(methodName) : "QRIS, Bank (VA), Akulaku PayLater, atau Kartu Debit";
     return `<div class="action-box">
       <span class="step-tag">Langkah terakhir</span>
-      <h3>⚡ Bayar dengan ${esc(methodName)}</h3>
+      <h3>⚡ ${single ? `Bayar dengan ${esc(methodName)}` : "Pembayaran Otomatis"}</h3>
       <p class="muted">Pembayaran diproses Poketo. Setelah berhasil, status pesanan otomatis menjadi <b>Lunas</b> — tidak perlu kirim bukti transfer.</p>
       <div class="pay-sum">
         <div class="row"><span>Total pesanan</span><span>${rupiah(O.total)}</span></div>
-        ${fee != null ? `<div class="row"><span>Biaya layanan ${esc(methodName)}${M.estimated ? " (perkiraan)" : ""}</span><span>+${rupiah(fee)}</span></div>
-        <div class="row total-row"><span>Total dibayar</span><b>${rupiah(total)}</b></div>` : ""}
+        ${lo != null ? `<div class="row"><span>Biaya layanan${single ? " " + esc(methodName) : " (sesuai metode)"}${M.estimated ? ", perkiraan" : ""}</span><span>+${range(lo, hi)}</span></div>
+        <div class="row total-row"><span>Total dibayar</span><b>${range(O.total + lo, O.total + hi)}</b></div>` : ""}
       </div>
       <p class="msg error" id="payErr" hidden></p>
       <button class="btn btn-primary full big" id="payBtn">💳 Bayar Sekarang via Poketo</button>
-      <small class="muted">Di halaman Poketo, pilih <b>${esc(methodName)}</b>. Link pembayaran berlaku 24 jam dan bisa dibuka lagi dari halaman Lacak Pesanan.</small>
+      <small class="muted">Di halaman Poketo, pilih <b>${label}</b>. Link pembayaran berlaku 24 jam dan bisa dibuka lagi dari halaman Lacak Pesanan.</small>
       <a class="link center-text" target="_blank" href="${waLink()}">Ada kendala? Konfirmasi via WhatsApp</a>
     </div>`;
   }
@@ -37,7 +40,7 @@ function actionBox() {
     ${unpriced ? `<p class="muted">Pesananmu berisi komponen request. Admin akan mencarikan komponennya lalu mengabari harga totalnya.${isPoketo() ? " Setelah harga dikonfirmasi, kamu bisa bayar via Poketo dari halaman Lacak Pesanan." : ""}</p>` : ""}
     <ol class="steps-list">
       <li>Klik tombol di bawah untuk mengirim detail pesanan ke admin.</li>
-      <li>Admin mengirim info pembayaran <b>${esc(methodName)}</b> (nomor rekening / e-wallet).</li>
+      <li>Admin mengirim info pembayaran <b>${esc(methodName)}</b> (kode QRIS / nomor rekening / e-wallet).</li>
       <li>Kirim bukti pembayaran, lalu pesanan diproses.</li>
     </ol>
     <a class="btn btn-wa-green full big" id="waBtn" target="_blank" href="${waLink()}">💬 Konfirmasi via WhatsApp</a>

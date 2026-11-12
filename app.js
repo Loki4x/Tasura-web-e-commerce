@@ -193,51 +193,69 @@ $("#checkoutForm").promo.addEventListener("input", e => {
 });
 
 // ====== Metode pembayaran ======
-// Dua cara bayar:
-//  • Otomatis via Poketo (QRIS, Virtual Account, Akulaku PayLater, Kartu Debit) — muncul jika diaktifkan admin
-//  • Via admin (WhatsApp): transfer bank / e-wallet, dikonfirmasi manual
+// Dua pilihan:
+//  • Pembayaran Otomatis (Poketo): QRIS, Virtual Account, Akulaku PayLater, Kartu Debit — metode dipilih di halaman Poketo
+//  • Pembayaran Manual via Admin (WhatsApp): QRIS, Transfer Bank, E-Wallet — dikonfirmasi admin
 const MANUAL_METHODS = [
+  { code: "QRIS_M", name: "QRIS", icon: "▦", desc: "Kode QRIS dikirim admin lewat WhatsApp" },
   { code: "TRANSFER", name: "Transfer Bank", icon: "🏦", desc: "Nomor rekening dikirim admin lewat WhatsApp" },
   { code: "EWALLET", name: "E-Wallet (OVO/DANA/GoPay)", icon: "📱", desc: "Nomor e-wallet dikirim admin lewat WhatsApp" },
 ];
+const AUTO_LABELS = { QRIS: "QRIS", VA: "Bank (Virtual Account)", AKULAKU: "Akulaku PayLater", CARD: "Kartu Debit" };
 let payMethods = [], payPick = null, payRenderId = 0;
 const onlinePay = () => useDb && typeof Pay !== "undefined" && Pay.enabled;
 const payAmount = () => cartTotal() - (promoState.diskon || 0);
 const pickedMethod = () => payMethods.find(m => m.code === payPick);
+const feeRange = m => m.feeMin === m.feeMax ? rupiah(m.feeMin) : `${rupiah(m.feeMin)} – ${rupiah(m.feeMax)}`;
 async function renderPayList() {
   const id = ++payRenderId, amount = payAmount(), online = onlinePay();
-  const auto = online ? await Pay.methods(amount) : [];
+  const list = online ? await Pay.methods(amount) : [];
   if (id !== payRenderId) return; // ada render yang lebih baru
+  const subs = list.map(m => {
+    const tooLow = m.min && amount < m.min, tooHigh = m.max && amount > m.max;
+    return { ...m, off: !m.available || tooLow || tooHigh,
+      reason: tooHigh ? `maks. ${rupiah(m.max)}` : tooLow ? `min. ${rupiah(m.min)}` : !m.available ? "tidak tersedia" : "" };
+  });
+  const ok = subs.filter(m => !m.off), fees = ok.map(m => m.fee);
   payMethods = [
-    ...auto.map(m => {
-      const tooLow = m.min && amount < m.min, tooHigh = m.max && amount > m.max;
-      return { ...m, online: true, disabled: !m.available || tooLow || tooHigh,
-        reason: tooHigh ? `Maks. ${rupiah(m.max)} per transaksi` : tooLow ? `Min. ${rupiah(m.min)}` : !m.available ? "Sedang tidak tersedia" : "" };
-    }),
-    ...MANUAL_METHODS.map(m => ({ ...m, online: false, disabled: false, reason: "" })),
+    ...(online ? [{ code: "AUTO", name: "Pembayaran Otomatis", value: "Pembayaran Otomatis (Poketo)", icon: "⚡", online: true,
+      disabled: !ok.length, estimated: ok.some(m => m.estimated), subs,
+      feeMin: fees.length ? Math.min(...fees) : null, feeMax: fees.length ? Math.max(...fees) : null }] : []),
+    ...MANUAL_METHODS.map(m => ({ ...m, value: m.name + " (via Admin)", online: false, disabled: false })),
   ];
   if (!payPick || !payMethods.some(m => m.code === payPick && !m.disabled)) payPick = payMethods.find(m => !m.disabled)?.code || null;
-  const opt = m => `
-    <label class="pay-opt ${m.disabled ? "off" : ""}">
-      <input type="radio" name="bayar" value="${esc(m.online ? m.name + " (Poketo)" : m.name + " (via Admin)")}" data-code="${m.code}" ${m.code === payPick ? "checked" : ""} ${m.disabled ? "disabled" : ""} />
-      <span class="pay-ico">${esc(m.icon || "💠")}</span>
-      <span class="pay-txt"><b>${esc(m.name)}</b><small>${esc(m.reason || m.desc || "")}</small></span>
-      ${m.online && !m.disabled && amount > 0 ? `<span class="pay-fee">${m.estimated ? "±" : "+"}${rupiah(m.fee)}<small>biaya layanan</small></span>` : ""}
-    </label>`;
-  const autoList = payMethods.filter(m => m.online), manual = payMethods.filter(m => !m.online);
-  $("#payList").innerHTML =
-    (autoList.length ? `<div class="pay-group"><div class="pay-group-head"><b>⚡ Bayar Otomatis via Poketo</b><small>Bayar langsung, status lunas otomatis tanpa konfirmasi manual</small></div>${autoList.map(opt).join("")}</div>` : "") +
-    `<div class="pay-group"><div class="pay-group-head"><b>💬 Bayar via Admin (WhatsApp)</b><small>Konfirmasi pesanan ke admin, lalu admin mengirim info pembayaran</small></div>${manual.map(opt).join("")}</div>`;
+  const radio = m => `<input type="radio" name="bayar" value="${esc(m.value)}" data-code="${m.code}" ${m.code === payPick ? "checked" : ""} ${m.disabled ? "disabled" : ""} />`;
+  const auto = payMethods.find(m => m.code === "AUTO");
+  const autoHtml = auto ? `
+    <label class="pay-opt pay-auto ${auto.disabled ? "off" : ""}">
+      ${radio(auto)}
+      <span class="pay-ico">⚡</span>
+      <span class="pay-txt"><b>Pembayaran Otomatis</b><small>${auto.disabled ? "Sedang tidak tersedia untuk nominal ini" : "Bayar langsung via Poketo, status lunas otomatis"}</small></span>
+      ${!auto.disabled && amount > 0 ? `<span class="pay-fee">${auto.estimated ? "±" : "+"}${feeRange(auto)}<small>biaya layanan</small></span>` : ""}
+      <span class="pay-chips">${subs.map(m => `<span class="pay-chip ${m.off ? "off" : ""}" title="${m.off ? esc(m.reason) : "Biaya layanan " + rupiah(m.fee)}">${esc(m.icon || "")} ${esc(AUTO_LABELS[m.code] || m.name)}${m.off ? ` <i>(${esc(m.reason)})</i>` : ""}</span>`).join("")}</span>
+    </label>` : "";
+  const manualHtml = `
+    <div class="pay-group pay-manual">
+      <div class="pay-group-head"><b>💬 Pembayaran Manual via Admin</b><small>Konfirmasi pesanan ke admin lewat WhatsApp, lalu admin mengirim info pembayaran</small></div>
+      ${payMethods.filter(m => !m.online).map(m => `
+      <label class="pay-opt">
+        ${radio(m)}
+        <span class="pay-ico">${esc(m.icon)}</span>
+        <span class="pay-txt"><b>${esc(m.name)}</b><small>${esc(m.desc)}</small></span>
+      </label>`).join("")}
+    </div>`;
+  $("#payList").innerHTML = autoHtml + manualHtml;
   updatePayHint();
 }
 function updatePayHint() {
   const m = pickedMethod(), req = requestCount() > 0;
-  const showFee = m?.online && !req && payAmount() > 0;
+  const showFee = m?.online && !m.disabled && !req && payAmount() > 0;
   $("#feeRow").hidden = $("#payTotalRow").hidden = !showFee;
   if (showFee) {
-    $("#feeLabel").textContent = `Biaya layanan ${m.name}${m.estimated ? " (perkiraan)" : ""}`;
-    $("#feeVal").textContent = "+" + rupiah(m.fee);
-    $("#payTotal").textContent = rupiah(m.totalAmount);
+    $("#feeLabel").textContent = `Biaya layanan Poketo${m.estimated ? " (perkiraan)" : ""}`;
+    $("#feeVal").textContent = "+" + feeRange(m);
+    const t = payAmount();
+    $("#payTotal").textContent = m.feeMin === m.feeMax ? rupiah(t + m.feeMin) : `${rupiah(t + m.feeMin)} – ${rupiah(t + m.feeMax)}`;
   }
   $("#payHint").hidden = !(m?.online && req);
   $("#payHint").textContent = m?.online && req ? "Keranjang berisi komponen request: harga komponennya dicarikan admin dulu. Setelah harga dikonfirmasi, kamu bisa bayar via Poketo dari halaman Lacak Pesanan." : "";
@@ -294,7 +312,7 @@ $("#checkoutForm").onsubmit = async e => {
     sessionStorage.setItem("tasura_last_order", JSON.stringify({
       order: { ...order, nama: f.nama, hp: f.hp, alamat: f.alamat, pembayaran: f.bayar, catatan: f.catatan || "", created_at: new Date().toISOString(),
         lokasi_lat: lokasi?.lat ?? null, lokasi_lng: lokasi?.lng ?? null },
-      method: { code: m.code, name: m.name, online: !!m.online && useDb, fee: m.fee ?? null, totalAmount: m.totalAmount ?? null, estimated: !!m.estimated },
+      method: { code: m.code, name: m.name, online: !!m.online && useDb, feeMin: m.feeMin ?? null, feeMax: m.feeMax ?? null, estimated: !!m.estimated },
       wa: waMessage(order, f),
     }));
     cart = []; saveCart(); localStorage.removeItem("tasura_checkout_note");
