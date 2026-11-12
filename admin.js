@@ -75,8 +75,14 @@ async function onSession(session) {
 
 // ================== MUAT DATA ==================
 async function loadAll() {
-  const pr = await db.from("build_presets").select("*").order("urutan").order("id");
+  const [pr, rv, al] = await Promise.all([
+    db.from("build_presets").select("*").order("urutan").order("id"),
+    db.from("reviews").select("*").order("created_at", { ascending: false }).limit(500),
+    db.from("stock_alerts").select("*").order("created_at", { ascending: false }).limit(1000),
+  ]);
   S.presets = pr.error ? null : pr.data;
+  S.reviews = rv.error ? null : rv.data;
+  S.alerts = al.error ? null : al.data;
   const [o, p, c, cu, st] = await Promise.all([
     db.from("orders").select("*").order("created_at", { ascending: false }).limit(1000),
     db.from("products").select("*").order("urutan").order("id"),
@@ -90,7 +96,7 @@ async function loadAll() {
   S.settings = Object.fromEntries((st.data || []).map(r => [r.key, r.value]));
   renderAllViews();
 }
-function renderAllViews() { renderSummary(); renderOrders(); renderProducts(); renderCoupons(); renderPresets(); renderCustomers(); renderSettings(); updateBadge(); }
+function renderAllViews() { renderSummary(); renderOrders(); renderProducts(); renderCoupons(); renderPresets(); renderReviews(); renderAlerts(); renderCustomers(); renderSettings(); updateBadge(); }
 
 function updateBadge() {
   const n = S.orders.filter(o => o.status === "Menunggu Konfirmasi").length;
@@ -309,7 +315,7 @@ function renderProducts() {
       <tr data-product="${p.id}" class="clickable ${p.aktif ? "" : "inactive"}">
         <td><div class="prod-cell"><div class="thumb-sm">${p.gambar ? `<img src="${esc(p.gambar)}" alt="">` : esc(p.emoji || "📦")}</div><div>${esc(p.nama)}<small>${esc(p.kategori)}</small></div></div></td>
         <td><b>${rupiah(p.harga)}</b>${p.harga_coret ? `<small><s>${rupiah(p.harga_coret)}</s></small>` : ""}</td>
-        <td><span class="stock-pill ${p.stok <= 0 ? "out" : p.stok <= 5 ? "low" : ""}">${p.stok}</span></td>
+        <td><span class="stock-pill ${p.stok <= 0 ? "out" : p.stok <= 5 ? "low" : ""}">${p.stok}</span>${waitingFor(p.id) ? `<small><button class="link" data-goto="notifstok">🔔 ${waitingFor(p.id)} menunggu</button></small>` : ""}</td>
         <td>${p.terjual}</td>
         <td><label class="switch"><input type="checkbox" data-toggle-product="${p.id}" ${p.aktif ? "checked" : ""}><span></span></label></td>
         <td class="right"><button class="link" data-edit-product="${p.id}">Edit</button> <button class="link danger" data-del-product="${p.id}">Hapus</button></td>
@@ -333,6 +339,31 @@ $("#productsTable").addEventListener("click", async e => {
   if (error) return toast("Gagal menghapus: " + error.message);
   S.products = S.products.filter(x => x.id !== p.id); renderProducts(); renderSummary(); toast("Produk dihapus");
 });
+
+// ---- Foto tambahan (galeri) ----
+let extraPhotos = [];
+const hasGallery = () => S.products.length ? "gambar_list" in S.products[0] : true;
+function renderExtra() {
+  $("#extraWrap").hidden = !hasGallery();
+  $("#extraGrid").innerHTML = extraPhotos.map((u, i) => `<div class="extra-item"><img src="${esc(u)}" alt=""><button type="button" data-extra-rm="${i}" aria-label="Hapus">✕</button></div>`).join("");
+}
+async function uploadImage(file) {
+  if (!file.type.startsWith("image/")) throw new Error("File harus berupa gambar");
+  if (file.size > 2 * 1024 * 1024) throw new Error(`${file.name}: ukuran foto maksimal 2 MB`);
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await db.storage.from("produk").upload(path, file, { cacheControl: "31536000", contentType: file.type });
+  if (error) throw new Error("Upload gagal: " + error.message);
+  return db.storage.from("produk").getPublicUrl(path).data.publicUrl;
+}
+$("#extraFiles").onchange = async e => {
+  const files = [...e.target.files].slice(0, 8 - extraPhotos.length); e.target.value = "";
+  for (const f of files) {
+    try { extraPhotos.push(await uploadImage(f)); renderExtra(); } catch (err) { toast(err.message); }
+  }
+  if (files.length) toast("Foto tambahan terupload ✓");
+};
+$("#extraGrid").onclick = e => { const b = e.target.closest("[data-extra-rm]"); if (b) { extraPhotos.splice(+b.dataset.extraRm, 1); renderExtra(); } };
 
 function setPreview(url, emoji) {
   $("#imgPreview").innerHTML = url ? `<img src="${esc(url)}" alt="">` : esc(emoji || "📦");
@@ -380,6 +411,7 @@ function openProduct(id) {
   ["nama", "kategori", "harga", "stok", "urutan", "rating", "terjual", "emoji", "deskripsi"].forEach(k => f[k].value = v[k] ?? "");
   f.harga_coret.value = v.harga_coret || "";
   f.gambar.value = v.gambar || "";
+  extraPhotos = [...(v.gambar_list || [])]; renderExtra();
   f.spek.value = (v.spek || []).join("\n");
   f.aktif.checked = v.aktif;
   const at = v.atribut || {};
@@ -414,6 +446,7 @@ $("#productForm").onsubmit = async e => {
     emoji: f.emoji.value.trim() || "📦", gambar: f.gambar.value || null, deskripsi: f.deskripsi.value.trim(),
     spek: f.spek.value.split("\n").map(s => s.trim()).filter(Boolean), aktif: f.aktif.checked, updated_at: new Date().toISOString(),
     atribut: readCompat(),
+    ...(hasGallery() ? { gambar_list: extraPhotos } : {}),
   };
   if (row.harga_coret && row.harga_coret <= row.harga) { $("#productError").textContent = "Harga coret harus lebih besar dari harga jual (atau kosongkan)."; $("#productError").hidden = false; return; }
   busy(btn, true);
@@ -567,6 +600,75 @@ $("#presetForm").onsubmit = async e => {
   if (error) { $("#presetError").textContent = error.message; $("#presetError").hidden = false; return; }
   if (S.editing) Object.assign(S.editing, data); else S.presets.push(data);
   renderPresets(); closeModals(); toast("Rakitan disimpan ✓");
+};
+
+// ================== ULASAN ==================
+S.revFilter = "Menunggu";
+function renderReviews() {
+  const pending = (S.reviews || []).filter(r => !r.approved).length;
+  $("#revBadge").hidden = !pending; $("#revBadge").textContent = pending;
+  if (!S.reviews) { $("#revFilters").innerHTML = ""; $("#reviewsTable").innerHTML = `<tr><td class="empty-note">Jalankan <b>supabase/005_fitur_lanjutan.sql</b> untuk mengaktifkan ulasan.</td></tr>`; return; }
+  $("#revFilters").innerHTML = ["Menunggu", "Disetujui", "Semua"].map(s => `<button class="chip ${S.revFilter === s ? "active" : ""}" data-rf="${s}">${s} <small>${s === "Menunggu" ? pending : s === "Disetujui" ? S.reviews.length - pending : S.reviews.length}</small></button>`).join("");
+  const list = S.reviews.filter(r => S.revFilter === "Semua" || (S.revFilter === "Menunggu" ? !r.approved : r.approved));
+  $("#reviewsTable").innerHTML = `<thead><tr><th>Produk</th><th>Pembeli</th><th>Rating</th><th>Ulasan</th><th>Tanggal</th><th></th></tr></thead><tbody>` +
+    (list.length ? list.map(r => `<tr>
+      <td>${esc(S.products.find(p => p.id === r.product_id)?.nama || "Produk dihapus")}</td>
+      <td>${esc(r.nama)}<small>${r.order_id ? "#TSR-" + r.order_id : ""}</small></td>
+      <td class="stars-cell">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</td>
+      <td class="rev-text">${esc(r.komentar || "—")}</td>
+      <td>${fmtDay(r.created_at)}</td>
+      <td class="right">${r.approved ? `<button class="link" data-rv-hide="${r.id}">Sembunyikan</button>` : `<button class="btn btn-primary sm" data-rv-ok="${r.id}">Setujui</button>`} <button class="link danger" data-rv-del="${r.id}">Hapus</button></td>
+    </tr>`).join("") : `<tr><td colspan="6" class="empty-note">Tidak ada ulasan.</td></tr>`) + "</tbody>";
+}
+$("#revFilters").onclick = e => { const b = e.target.closest("[data-rf]"); if (b) { S.revFilter = b.dataset.rf; renderReviews(); } };
+$("#reviewsTable").onclick = async e => {
+  const ok = e.target.closest("[data-rv-ok]"), hide = e.target.closest("[data-rv-hide]"), del = e.target.closest("[data-rv-del]");
+  const id = +(ok || hide || del)?.dataset[ok ? "rvOk" : hide ? "rvHide" : "rvDel"]; if (!id) return;
+  const r = S.reviews.find(x => x.id === id);
+  if (del) {
+    if (!confirm("Hapus ulasan ini secara permanen?")) return;
+    const { error } = await db.from("reviews").delete().eq("id", id); if (error) return toast("Gagal: " + error.message);
+    S.reviews = S.reviews.filter(x => x.id !== id);
+  } else {
+    const { error } = await db.from("reviews").update({ approved: !!ok }).eq("id", id); if (error) return toast("Gagal: " + error.message);
+    r.approved = !!ok;
+  }
+  // rating produk dihitung ulang di database; muat ulang angkanya
+  const { data } = await db.from("products").select("*").eq("id", r.product_id).maybeSingle();
+  if (data) Object.assign(S.products.find(p => p.id === data.id) || {}, data);
+  renderReviews(); renderProducts(); toast(del ? "Ulasan dihapus" : ok ? "Ulasan disetujui ✓" : "Ulasan disembunyikan");
+};
+
+// ================== NOTIFIKASI STOK ==================
+const waitingFor = pid => (S.alerts || []).filter(a => a.product_id === pid && !a.notified_at).length;
+function renderAlerts() {
+  const waiting = (S.alerts || []).filter(a => !a.notified_at);
+  $("#alertBadge").hidden = !waiting.length; $("#alertBadge").textContent = waiting.length;
+  if (!S.alerts) { $("#alertsList").innerHTML = `<div class="panel"><p class="empty-note">Jalankan <b>supabase/005_fitur_lanjutan.sql</b> untuk mengaktifkan fitur ini.</p></div>`; return; }
+  const byProduct = {};
+  waiting.forEach(a => (byProduct[a.product_id] ||= []).push(a));
+  const site = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}`;
+  const groups = Object.entries(byProduct).map(([pid, list]) => ({ p: S.products.find(x => x.id === +pid), list })).filter(g => g.p)
+    .sort((a, b) => (b.p.stok > 0) - (a.p.stok > 0) || b.list.length - a.list.length);
+  $("#alertsList").innerHTML = groups.length ? groups.map(({ p, list }) => `
+    <div class="panel alert-group">
+      <div class="panel-head"><div><h3>${esc(p.nama)}</h3><span class="muted">${list.length} orang menunggu • stok sekarang <span class="stock-pill ${p.stok <= 0 ? "out" : ""}">${p.stok}</span></span></div>
+        <button class="btn btn-ghost sm" data-edit-product="${p.id}">Ubah stok</button></div>
+      ${p.stok <= 0 ? `<p class="muted">Isi stok produk ini dulu, lalu kabari pembeli di bawah.</p>` : ""}
+      <table class="table compact">${list.map(a => `<tr>
+        <td>${esc(a.nama || "—")}<small>+${esc(a.hp)} • ${fmtDay(a.created_at)}</small></td>
+        <td class="right"><a class="btn btn-wa-green sm" target="_blank" href="https://wa.me/${esc(a.hp)}?text=${encodeURIComponent(`Halo${a.nama ? " " + a.nama : ""}, kabar baik dari Tasura! ${p.nama} sudah tersedia lagi 🎉
+Cek di sini: ${site}produk.html?id=${p.id}`)}">Kirim WA</a>
+          <button class="link" data-alert-done="${a.id}">Tandai sudah dikabari</button></td></tr>`).join("")}</table>
+    </div>`).join("") : `<div class="panel"><p class="empty-note">Tidak ada pembeli yang menunggu stok.</p></div>`;
+}
+$("#alertsList").onclick = async e => {
+  const ed = e.target.closest("[data-edit-product]"); if (ed) return openProduct(+ed.dataset.editProduct);
+  const b = e.target.closest("[data-alert-done]"); if (!b) return;
+  const now = new Date().toISOString();
+  const { error } = await db.from("stock_alerts").update({ notified_at: now }).eq("id", +b.dataset.alertDone);
+  if (error) return toast("Gagal: " + error.message);
+  S.alerts.find(a => a.id === +b.dataset.alertDone).notified_at = now; renderAlerts(); renderProducts();
 };
 
 // ================== PELANGGAN ==================

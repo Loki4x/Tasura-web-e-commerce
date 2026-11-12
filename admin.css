@@ -151,3 +151,13 @@ label.check input{width:18px;height:18px;accent-color:#0a0a0a}
 .preset-parts{display:grid;gap:4px;font-size:.85rem;background:var(--gray-bg);border-radius:10px;padding:10px 12px}
 .preset-parts:empty{display:none}
 .preset-total{font-weight:800;margin-top:4px}
+.extra-photos{display:grid;gap:8px}
+.extra-grid{display:flex;flex-wrap:wrap;gap:8px}
+.extra-grid:empty{display:none}
+.extra-item{position:relative;width:70px;height:70px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.extra-item img{width:100%;height:100%;object-fit:cover}
+.extra-item button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:#000a;color:#fff;font-size:.7rem;cursor:pointer}
+.stars-cell{color:#f5a524;white-space:nowrap}
+.rev-text{max-width:360px;font-size:.88rem}
+.alert-group{margin-bottom:14px}
+.btn.btn-wa-green.sm{padding:7px 14px;font-size:.8rem}

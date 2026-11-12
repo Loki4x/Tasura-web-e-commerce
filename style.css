@@ -373,3 +373,9 @@ button.link:hover{text-decoration:underline}
 .loc-info{font-size:.85rem;background:var(--gray-bg);border-radius:10px;padding:10px 12px}
 .loc-addr{color:var(--muted);font-size:.8rem;margin-top:4px}
 .loc-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+
+/* ====== Bandingkan ====== */
+.cmp-btn{background:none;border:0;cursor:pointer;font:inherit;font-size:.8rem;font-weight:600;color:var(--muted);padding:6px 0 0}
+.cmp-btn:hover,.cmp-btn.on{color:var(--black)}
+.compare-bar{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:85;background:var(--black);color:#fff;padding:12px 22px;border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.3);font-size:.9rem;display:flex;gap:10px;align-items:center}
+.compare-bar span{opacity:.75}

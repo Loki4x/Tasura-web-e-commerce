@@ -31,13 +31,17 @@ function renderProducts() {
         <span class="meta">⭐ ${p.rating} • ${p.terjual} terjual ${stokInfo(p)}</span>
         <div class="price"><b>${rupiah(p.harga)}</b>${p.hargaCoret ? `<s>${rupiah(p.hargaCoret)}</s>` : ""}</div>
         <button class="btn btn-primary add" data-add="${p.id}" ${habis(p) ? "disabled" : ""}>${habis(p) ? "Stok Habis" : "+ Keranjang"}</button>
+        <button class="cmp-btn ${typeof Compare !== "undefined" && Compare.has(p.id) ? "on" : ""}" data-cmp="${p.id}">${typeof Compare !== "undefined" && Compare.has(p.id) ? "✓ Dibandingkan" : "⇄ Bandingkan"}</button>
       </div>
     </article>`).join("");
 }
 
+// Halaman produk sendiri (link bisa dibagikan & diindeks Google)
+const productUrl = p => `produk.html?id=${p.id}-${String(p.nama).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60)}`;
 function showDetail(id) {
   const p = findP(id);
   if (!p) return;
+  location.href = productUrl(p); return;
   $("#detailBox").innerHTML = `
     <div class="thumb">${discPct(p) ? `<span class="disc">-${discPct(p)}%</span>` : ""}${thumbHTML(p)}</div>
     <div class="detail-body">
@@ -134,6 +138,10 @@ function renderSummary() {
 }
 
 // ====== Events ======
+document.addEventListener("click", e => {
+  const cmp = e.target.closest("[data-cmp]");
+  if (cmp) { if (Compare.toggle(+cmp.dataset.cmp) === "full") toast(`Maksimal ${Compare.MAX} produk untuk dibandingkan`); renderProducts(); return; }
+}, true);
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-add],[data-detail],[data-inc],[data-dec],[data-rm],[data-cat],[data-close]");
   if (!t) return;
@@ -398,5 +406,7 @@ if (db) { $("#productGrid").innerHTML = `<p class="empty">Memuat produk...</p>`;
 else renderAll();
 loadStore().then(() => {
   // Dibuka dari halaman Rakit PC: langsung tampilkan keranjang
+  const cat = sessionStorage.getItem("tasura_cat");
+  if (cat) { sessionStorage.removeItem("tasura_cat"); activeCat = cat; renderCategories(); renderProducts(); }
   if (new URLSearchParams(location.search).has("keranjang")) { history.replaceState(null, "", location.pathname); openCart(); }
 });

@@ -31,6 +31,8 @@
         <button data-view="produk"><span>🖥️</span>Produk</button>
         <button data-view="kupon"><span>🏷️</span>Kupon Diskon</button>
         <button data-view="rakitan"><span>🧩</span>Rakitan</button>
+        <button data-view="ulasan"><span>⭐</span>Ulasan <b class="nav-badge" id="revBadge" hidden>0</b></button>
+        <button data-view="notifstok"><span>🔔</span>Notifikasi Stok <b class="nav-badge" id="alertBadge" hidden>0</b></button>
         <button data-view="pelanggan"><span>👥</span>Pelanggan</button>
         <button data-view="pengaturan"><span>⚙️</span>Pengaturan</button>
       </nav>
@@ -105,6 +107,19 @@
         <div class="panel table-wrap"><table class="table" id="presetsTable"></table></div>
       </section>
 
+      <!-- ULASAN -->
+      <section class="view" data-view="ulasan" hidden>
+        <header class="view-head"><div><h1>Ulasan Pembeli</h1><p class="muted">Ulasan baru tampil di halaman produk setelah kamu setujui. Rating produk dihitung otomatis dari ulasan yang disetujui.</p></div></header>
+        <div class="toolbar"><div class="chips" id="revFilters"></div></div>
+        <div class="panel table-wrap"><table class="table" id="reviewsTable"></table></div>
+      </section>
+
+      <!-- NOTIFIKASI STOK -->
+      <section class="view" data-view="notifstok" hidden>
+        <header class="view-head"><div><h1>Notifikasi Stok</h1><p class="muted">Pembeli yang minta dikabari saat produk tersedia lagi. Isi stok produknya, lalu kirim WhatsApp ke mereka.</p></div></header>
+        <div id="alertsList"></div>
+      </section>
+
       <!-- PELANGGAN -->
       <section class="view" data-view="pelanggan" hidden>
         <header class="view-head">
@@ -177,6 +192,11 @@ on conflict do nothing;</pre>
             </div>
           </div>
           <input type="hidden" name="gambar" />
+          <div class="extra-photos" id="extraWrap">
+            <label>Foto Tambahan <small class="muted">(galeri di halaman produk, maks. 8)</small></label>
+            <div class="extra-grid" id="extraGrid"></div>
+            <label class="btn btn-ghost sm file-btn">＋ Tambah Foto<input type="file" id="extraFiles" accept="image/*" multiple hidden /></label>
+          </div>
           <label>Emoji (jika belum ada foto)<input class="input" name="emoji" maxlength="8" value="📦" /></label>
           <label>Deskripsi<textarea class="input" name="deskripsi" rows="3"></textarea></label>
           <label>Spesifikasi (satu baris = satu poin)<textarea class="input" name="spek" rows="5" placeholder="Memori 8GB GDDR6&#10;Konektor daya 1× 8-pin"></textarea></label>
