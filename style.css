@@ -332,8 +332,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 #checkoutError[hidden]{display:none}
 
 /* ====== Rakit PC (halaman utama) ====== */
-.nav>a.nav-hot{font-weight:700;color:var(--black)}
-.nav>a.nav-hot::after{content:"BARU";font-size:.6rem;font-weight:800;background:var(--black);color:#fff;padding:2px 6px;border-radius:6px;margin-left:6px;vertical-align:2px}
+
 .hero-btns{display:flex;gap:12px;flex-wrap:wrap}
 .btn-outline-light{border:1.5px solid rgba(255,255,255,.5);color:#fff;background:transparent}
 .btn-outline-light:hover{background:#fff;color:var(--black)}

@@ -148,7 +148,7 @@ h1,h2,h3,h4{letter-spacing:normal}
 .chip:hover{background:var(--cream);color:#000}
 .chip.active{background:#000;color:#fff;box-shadow:none}
 .sort{height:40px;padding:0 16px;border:0;box-shadow:inset 0 0 0 .5px var(--tab-edge);background:var(--canvas);font-size:14px}
-.grid{gap:40px 12px}
+#productGrid{gap:40px 12px}
 .cmp-toggle,.card .cmp{font-size:13px}
 
 /* ---------- Bento demonstrasi ---------- */
@@ -247,7 +247,8 @@ input,textarea,select{font-family:inherit}
 .pd-info h1{font-weight:300;font-size:36px;line-height:42px;letter-spacing:normal}
 .pd-price b,.sum-total b{font-weight:500}
 .pd-section h2,.track-head h2{font-weight:300;font-size:28px}
-.pd-gallery .main,.pd-main{border-radius:16px;background:var(--cream)}
+.gallery-main{border-radius:16px;background:var(--cream);box-shadow:var(--stage-edge)}
+.gallery-thumbs button{border-radius:12px;background:var(--cream)}
 .tag-wajib{background:#000}
 .step-tag,.preset-label{font-weight:500;text-transform:none;letter-spacing:.01em}
 
@@ -297,12 +298,96 @@ input,textarea,select{font-family:inherit}
 }
 @media(max-width:480px){
   .popular-grid{grid-template-columns:1fr 1fr}
-  .grid{grid-template-columns:1fr 1fr;gap:28px 10px}
-  .card .thumb,.pcard .thumb{font-size:3.2rem}
-  .card h3,.pcard h3{font-size:14px}
-  .add{height:36px;font-size:14px}
+  #productGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 10px}
   .pill-row .btn{padding:0 14px;font-size:15px}
   .proof-row{grid-template-columns:1fr}
   .pill-row .btn{flex:1}
 }
 .toast{opacity:0;transition:transform .3s,opacity .3s}.toast.show{opacity:1}
+
+/* ---------- HP (portrait/Android): ukuran kotak & ikon lebih ringkas ---------- */
+@media(max-width:600px){
+  .popular-grid,#productGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 10px}
+  .pcard .thumb,.card .thumb{aspect-ratio:1/.82;font-size:2.4rem;border-radius:12px}
+  .disc{top:8px;left:8px;font-size:11px;padding:2px 8px}
+  .pcard-body,.card-body{padding:10px 2px 0}
+  .pcard h3,.card h3{font-size:14px;line-height:1.35}
+  .cat,.meta,.rate,.rate b{font-size:12px}
+  .pprice,.price b{font-size:14px}
+  .price{flex-wrap:wrap;gap:2px 6px}
+  .add{height:34px;font-size:13px;white-space:normal;padding:0 10px;margin-top:8px}
+  .card .cmp,.cmp-toggle{font-size:12px}
+  .chip{height:32px;padding:0 12px;font-size:13px}
+  .categories{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-8px;padding-inline:16px}
+  .categories::-webkit-scrollbar{display:none}
+  .chip{flex:none}
+  .sort{height:36px;font-size:13px}
+  /* hero */
+  .display,.page-hero h1,.builder-hero h1{font-size:32px;line-height:36px}
+  .heading,.big-title{font-size:26px;line-height:32px}
+  .eyebrow2{font-size:14px;margin-bottom:12px}
+  .support,.hero-support{font-size:15px;line-height:22px}
+  .btn{height:40px;font-size:15px;padding:0 16px}
+  .orbs{height:190px}
+  .orb-play{width:36px;height:36px}
+  .orb-play svg{width:15px;height:15px}
+  .seg{height:38px;padding:3px}
+  .seg button{font-size:13px;padding:0 10px}
+  .caps-sel b{font-size:15px}
+  .proof-row{padding-top:20px;gap:10px}
+  .proof-row li{font-size:13px}
+  /* bab */
+  .chapter{padding-top:64px}
+  .chapter-head{padding-bottom:24px}
+  .chapter-head .heading+.btn{margin-top:20px}
+  .closing{margin-top:64px}
+  /* bento: panel tidak lagi menumpuk dengan teks */
+  .feature{min-height:0;display:flex;flex-direction:column}
+  .ui-panel{position:relative;top:auto;left:auto;right:auto;margin:20px -16px 0 16px;padding:4px 12px}
+  .ui-row{grid-template-columns:32px 1fr auto;gap:10px;padding:9px 0}
+  .ui-ico{width:32px;height:32px;border-radius:10px;font-size:1rem}
+  .ui-row b{font-size:13px}.ui-row small{font-size:12px}
+  .ok-dot{font-size:12px;padding-right:20px}
+  .feature-cap{position:relative;padding:16px 18px 18px}
+  .field-warm{min-height:300px}
+  .field-warm .feature-cap{position:absolute}
+  .feature-orb{--s:150px;top:38%}
+  .principle{min-height:0;display:flex;flex-direction:column}
+  .principle .geo{position:static;transform:none;margin:24px auto 0;width:120px;height:120px}
+  .feature-cap h3{font-size:15px}.feature-cap p{font-size:14px;line-height:20px}
+  .track li{padding-bottom:20px}
+  .quotes blockquote{font-size:17px}
+  .faq summary{font-size:15px;line-height:22px;padding:16px 0}
+  .faq details p{font-size:14px;padding-right:8px}
+  .closing h2{font-size:24px;line-height:30px}
+  .footer2{padding:56px 0 32px}
+  .copy2{padding-top:32px}
+  /* header & tombol mengambang */
+  .header-inner{min-height:56px;gap:10px}
+  .logo{font-size:18px}
+  .icon-btn{width:36px;height:36px}
+  .icon-btn svg{width:20px;height:20px}
+  .account-btn,.account-btn.logged{height:32px}
+  .account-btn.logged{width:32px}
+  .search input{height:36px;font-size:13px}
+  .search svg{top:9px}
+  .announce{font-size:12px;min-height:40px}
+  .announce a{height:28px;padding:0 10px;font-size:12px}
+  .fab{width:46px;height:46px;right:14px;bottom:14px}
+  .fab svg{width:20px;height:20px}
+  /* halaman lain */
+  .page-hero,.builder-hero{padding:40px 0 28px}
+  .pd-info h1{font-size:24px;line-height:30px}
+  .pd-price b{font-size:1.5rem}
+  .gallery-main{aspect-ratio:4/3}
+  .gallery-emoji{font-size:5rem}
+  .gallery-thumbs button{flex-basis:56px;height:56px}
+  .slots-head{flex-direction:column;align-items:flex-start;gap:4px}
+  .slots-head h2,.presets-wrap h2{font-size:22px}
+  .slot{grid-template-columns:44px 1fr;padding:12px;gap:12px}
+  .slot-icon{width:44px;height:44px;font-size:1.4rem;border-radius:10px}
+  .track-head h2,.pd-section h2{font-size:22px}
+}
+/* Invoice & admin memakai tema yang sama */
+.invoice-body,body.admin{background:var(--canvas)}
+@media print{.invoice-body{background:#fff}}

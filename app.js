@@ -417,7 +417,7 @@ function renderHero() {
   const n = list.length, half = Math.floor(n / 2);
   const order = list.map((p, i) => ({ p, i, d: ((i - heroSel + n + half) % n) - half }));
   const mobile = innerWidth <= 768, gap = mobile ? 16 : 28;
-  const size = d => (mobile ? [200, 120, 90, 70] : [256, 202, 145, 110])[Math.min(Math.abs(d), 3)];
+  const size = d => (mobile ? [168, 100, 72, 56] : [256, 202, 145, 110])[Math.min(Math.abs(d), 3)];
   // Posisi horizontal dari tengah: setengah ukuran bola + jarak + bola berikutnya
   const pos = d => { let x = 0; for (let k = 1; k <= Math.abs(d); k++) x += size(k - 1) / 2 + gap + size(k) / 2; return Math.sign(d) * x; };
   $("#heroOrbs").innerHTML = order.map(({ p, i, d }) => `
