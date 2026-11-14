@@ -403,3 +403,8 @@ input,textarea,select{font-family:inherit}
 @keyframes capIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .orb.far:not(.sel){opacity:.55}
 @media(prefers-reduced-motion:reduce){.orb,.orb-obj{transition:none}.orb-play,.caps-sel,.orbs.enter .orb{animation:none}}
+
+/* Kartu Rakitan Rekomendasi: harga di atas, tombol penuh di bawahnya */
+.preset-foot{flex-direction:column;align-items:stretch;gap:12px}
+.preset-foot b{font-weight:500;font-size:1.25rem}
+.preset-foot .btn{width:100%;white-space:normal}
