@@ -420,12 +420,33 @@ function renderHero() {
   const size = d => (mobile ? [168, 100, 72, 56] : [256, 202, 145, 110])[Math.min(Math.abs(d), 3)];
   // Posisi horizontal dari tengah: setengah ukuran bola + jarak + bola berikutnya
   const pos = d => { let x = 0; for (let k = 1; k <= Math.abs(d); k++) x += size(k - 1) / 2 + gap + size(k) / 2; return Math.sign(d) * x; };
-  $("#heroOrbs").innerHTML = order.map(({ p, i, d }) => `
-    <button type="button" class="orb orb-c${(p.id % 4) + 1} ${d === 0 ? "sel" : Math.abs(d) >= 2 ? "far" : ""}" style="--s:${size(d)}px;--px:${pos(d)}px" data-orb="${i}" aria-label="${esc(p.nama)}">
-      <span class="orb-grain"></span>
-      <span class="orb-obj">${p.gambar ? `<img src="${esc(p.gambar)}" alt="">` : esc(p.emoji)}</span>
-      ${d === 0 ? `<span class="orb-play" data-detail="${p.id}" aria-label="Lihat produk"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>` : ""}
-    </button>`).join("");
+  const box = $("#heroOrbs"), key = heroTab + ":" + list.map(p => p.id).join(",") + ":" + mobile;
+  // Bola dibuat sekali per tab; saat produk dipilih, bola yang sama digeser (animasi CSS)
+  if (box.dataset.key !== key) {
+    box.dataset.key = key;
+    box.innerHTML = list.map((p, i) => `
+      <button type="button" class="orb orb-c${(p.id % 4) + 1}" data-orb="${i}" aria-label="${esc(p.nama)}">
+        <span class="orb-grain"></span>
+        <span class="orb-obj">${p.gambar ? `<img src="${esc(p.gambar)}" alt="">` : esc(p.emoji)}</span>
+      </button>`).join("");
+    box.classList.remove("enter"); void box.offsetWidth; box.classList.add("enter"); clearTimeout(box._t); box._t = setTimeout(() => box.classList.remove("enter"), 700);
+  }
+  const els = [...box.children];
+  order.forEach(({ p, i, d }) => {
+    const el = els[i], prev = el.dataset.d === undefined ? null : +el.dataset.d;
+    // Bola yang "memutar" dari ujung kiri ke kanan (atau sebaliknya) muncul memudar, tidak melintas
+    const wrap = prev !== null && Math.abs(prev - d) > half;
+    if (wrap) { el.style.transition = "none"; el.style.opacity = "0"; }
+    el.style.setProperty("--s", size(d) + "px");
+    el.style.setProperty("--px", pos(d) + "px");
+    el.style.zIndex = 10 - Math.abs(d);
+    el.classList.toggle("sel", d === 0);
+    el.classList.toggle("far", Math.abs(d) >= 2);
+    el.dataset.d = d;
+    if (wrap) { void el.offsetWidth; el.style.transition = ""; el.style.opacity = ""; }
+    el.querySelector(".orb-play")?.remove();
+    if (d === 0) el.insertAdjacentHTML("beforeend", `<span class="orb-play" data-detail="${p.id}" aria-label="Lihat produk"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>`);
+  });
   const sel = list[heroSel];
   $("#heroCaps").innerHTML = `
     <div class="caps-list">${list.map((p, i) => `<button type="button" data-orb="${i}" class="${i === heroSel ? "on" : ""}" aria-label="${esc(p.nama)}"></button>`).join("")}</div>
@@ -437,6 +458,17 @@ $("#heroTabs").addEventListener("click", e => {
   document.querySelectorAll("#heroTabs button").forEach(x => x.classList.toggle("active", x === b));
   renderHero();
 });
+// Geser kiri/kanan di layar sentuh untuk pindah produk
+(() => {
+  const stage = document.querySelector(".hero-stage"); let x0 = null;
+  const step = dir => { const n = $("#heroOrbs").children.length; if (n) { heroSel = (heroSel + dir + n) % n; renderHero(); } };
+  stage.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
+  stage.addEventListener("touchend", e => {
+    if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
+  });
+  stage.addEventListener("keydown", e => { if (e.key === "ArrowRight") step(1); if (e.key === "ArrowLeft") step(-1); });
+})();
 document.querySelector(".hero-stage").addEventListener("click", e => {
   if (e.target.closest("[data-detail]")) return;
   const o = e.target.closest("[data-orb]"); if (!o) return;

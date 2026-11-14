@@ -391,3 +391,15 @@ input,textarea,select{font-family:inherit}
 /* Invoice & admin memakai tema yang sama */
 .invoice-body,body.admin{background:var(--canvas)}
 @media print{.invoice-body{background:#fff}}
+
+/* Animasi panggung produk */
+.orb{transition:width .6s cubic-bezier(.22,.8,.24,1),height .6s cubic-bezier(.22,.8,.24,1),transform .6s cubic-bezier(.22,.8,.24,1),opacity .45s ease}
+.orb-obj{transition:font-size .6s cubic-bezier(.22,.8,.24,1)}
+.orb-play{animation:popIn .35s .25s both cubic-bezier(.22,.8,.24,1)}
+@keyframes popIn{from{opacity:0;transform:translateX(-50%) scale(.6)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+.orbs.enter .orb{animation:orbIn .55s both cubic-bezier(.22,.8,.24,1)}
+@keyframes orbIn{from{opacity:0;filter:blur(6px)}to{filter:none}}
+.caps-sel{animation:capIn .45s both cubic-bezier(.22,.8,.24,1)}
+@keyframes capIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.orb.far:not(.sel){opacity:.55}
+@media(prefers-reduced-motion:reduce){.orb,.orb-obj{transition:none}.orb-play,.caps-sel,.orbs.enter .orb{animation:none}}
