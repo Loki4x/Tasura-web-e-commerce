@@ -400,26 +400,48 @@ document.addEventListener("click", e => {
 });
 document.querySelector(".dropdown-toggle").onclick = () => document.querySelector(".dropdown").classList.toggle("open");
 
-// ====== Hero slider ======
-(() => {
-  const slides = [...document.querySelectorAll(".slide")];
-  let i = 0, timer;
-  $("#dots").innerHTML = slides.map((_, n) => `<button aria-label="Slide ${n + 1}"></button>`).join("");
-  const dots = [...document.querySelectorAll("#dots button")];
-  const go = n => {
-    i = (n + slides.length) % slides.length;
-    slides.forEach((s, k) => s.classList.toggle("active", k === i));
-    dots.forEach((d, k) => d.classList.toggle("active", k === i));
-    clearInterval(timer); timer = setInterval(() => go(i + 1), 6000);
-  };
-  dots.forEach((d, n) => d.onclick = () => go(n));
-  $("#slidePrev").onclick = () => go(i - 1);
-  $("#slideNext").onclick = () => go(i + 1);
-  go(0);
-})();
-
-// ====== Marquee (diulang agar berjalan tanpa putus) ======
-$("#marquee").innerHTML += $("#marquee").innerHTML;
+// ====== Hero: panggung produk dengan bola cahaya ======
+const HERO_TABS = {
+  siap: p => ["PC Rakitan", "Monitor"].includes(p.kategori),
+  komponen: p => ["Processor", "VGA", "RAM", "Storage", "Motherboard", "PSU", "Casing"].includes(p.kategori),
+  aksesoris: p => !["PC Rakitan", "Monitor", "Processor", "VGA", "RAM", "Storage", "Motherboard", "PSU", "Casing"].includes(p.kategori),
+};
+let heroTab = "siap", heroSel = 0;
+addEventListener("resize", () => { clearTimeout(renderHero.t); renderHero.t = setTimeout(renderHero, 150); });
+function renderHero() {
+  const list = PRODUCTS.filter(p => HERO_TABS[heroTab](p) && !habis(p)).sort((a, b) => b.terjual - a.terjual).slice(0, 5);
+  if (!list.length) { $("#heroOrbs").innerHTML = ""; $("#heroCaps").innerHTML = ""; return; }
+  heroSel = Math.min(heroSel, list.length - 1);
+  // Urutkan agar produk terpilih berada di tengah; ukuran mengecil menjauhi tengah
+  // Melingkar: produk lain tampil di kiri dan kanan produk terpilih
+  const n = list.length, half = Math.floor(n / 2);
+  const order = list.map((p, i) => ({ p, i, d: ((i - heroSel + n + half) % n) - half }));
+  const mobile = innerWidth <= 768, gap = mobile ? 16 : 28;
+  const size = d => (mobile ? [200, 120, 90, 70] : [256, 202, 145, 110])[Math.min(Math.abs(d), 3)];
+  // Posisi horizontal dari tengah: setengah ukuran bola + jarak + bola berikutnya
+  const pos = d => { let x = 0; for (let k = 1; k <= Math.abs(d); k++) x += size(k - 1) / 2 + gap + size(k) / 2; return Math.sign(d) * x; };
+  $("#heroOrbs").innerHTML = order.map(({ p, i, d }) => `
+    <button type="button" class="orb orb-c${(p.id % 4) + 1} ${d === 0 ? "sel" : Math.abs(d) >= 2 ? "far" : ""}" style="--s:${size(d)}px;--px:${pos(d)}px" data-orb="${i}" aria-label="${esc(p.nama)}">
+      <span class="orb-grain"></span>
+      <span class="orb-obj">${p.gambar ? `<img src="${esc(p.gambar)}" alt="">` : esc(p.emoji)}</span>
+      ${d === 0 ? `<span class="orb-play" data-detail="${p.id}" aria-label="Lihat produk"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>` : ""}
+    </button>`).join("");
+  const sel = list[heroSel];
+  $("#heroCaps").innerHTML = `
+    <div class="caps-list">${list.map((p, i) => `<button type="button" data-orb="${i}" class="${i === heroSel ? "on" : ""}" aria-label="${esc(p.nama)}"></button>`).join("")}</div>
+    <div class="caps-sel"><small>${esc(sel.kategori)}</small><b>${esc(sel.nama)}</b><span>${rupiah(sel.harga)}${sel.hargaCoret > sel.harga ? ` <s>${rupiah(sel.hargaCoret)}</s>` : ""}</span></div>`;
+}
+$("#heroTabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-hero]"); if (!b) return;
+  heroTab = b.dataset.hero; heroSel = 0;
+  document.querySelectorAll("#heroTabs button").forEach(x => x.classList.toggle("active", x === b));
+  renderHero();
+});
+document.querySelector(".hero-stage").addEventListener("click", e => {
+  if (e.target.closest("[data-detail]")) return;
+  const o = e.target.closest("[data-orb]"); if (!o) return;
+  heroSel = +o.dataset.orb; renderHero();
+});
 
 // ====== FAQ: hanya satu terbuka ======
 document.querySelectorAll("#faqList details").forEach(d => d.addEventListener("toggle", () => {
@@ -431,7 +453,7 @@ if (sessionStorage.getItem("tasura_announce_closed")) $("#announce").hidden = tr
 $("#announceClose").onclick = () => { $("#announce").hidden = true; sessionStorage.setItem("tasura_announce_closed", "1"); };
 $("#announceCta").onclick = e => { e.preventDefault(); Auth.openAuth(Auth.loggedIn ? "login" : "register"); };
 $("#year").textContent = new Date().getFullYear();
-const renderAll = () => { renderCategories(); renderProducts(); renderCart(); renderPopular(); renderNavCategories(); };
+const renderAll = () => { renderCategories(); renderProducts(); renderCart(); renderPopular(); renderNavCategories(); renderHero(); };
 
 // ====== Muat produk & pengaturan dari Supabase ======
 async function loadStore() {
