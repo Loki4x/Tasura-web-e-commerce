@@ -173,10 +173,20 @@ $("#overlay").onclick = closeCart;
 $("#menuBtn").onclick = () => $("#nav").classList.toggle("open");
 document.querySelectorAll("#nav a").forEach(a => a.onclick = () => $("#nav").classList.remove("open"));
 
+// Checkout wajib login: tamu diarahkan ke Masuk/Daftar dulu, lalu otomatis lanjut ke data pengiriman
+const loginRequired = () => !!db && !Auth.loggedIn;
+function askLoginForCheckout() {
+  closeCart(); $("#checkoutModal").classList.remove("show");
+  sessionStorage.setItem("tasura_after_login", "checkout");
+  Auth.openAuth("login", "Masuk atau daftar dulu untuk melanjutkan checkout. Keranjangmu tetap tersimpan.");
+}
+document.addEventListener("tasura:login", e => { if (e.detail === "checkout" && cart.length) $("#checkoutBtn").onclick(); });
+document.addEventListener("tasura:logout", () => $("#checkoutModal").classList.remove("show"));
 $("#checkoutBtn").onclick = () => {
   if (!cart.length) return toast("Keranjang masih kosong");
+  if (loginRequired()) return askLoginForCheckout();
   closeCart();
-  $("#loginHint").hidden = Auth.loggedIn;
+  $("#loginHint").hidden = true;
   $("#checkoutError").hidden = true;
   Auth.prefill($("#checkoutForm"));
   const note = localStorage.getItem("tasura_checkout_note");
@@ -284,6 +294,7 @@ $("#checkoutForm").onsubmit = async e => {
   const form = e.target, btn = form.querySelector("button[type=submit]");
   const f = Object.fromEntries(new FormData(form));
   const err = $("#checkoutError"); err.hidden = true;
+  if (loginRequired()) return askLoginForCheckout();
   const m = pickedMethod();
   if (!f.bayar || !m) { err.textContent = "Pilih metode pembayaran."; err.hidden = false; return; }
   btn.disabled = true; btn.textContent = "Memproses pesanan...";
@@ -508,15 +519,15 @@ const startParams = new URLSearchParams(location.search);
 const startWith = startParams.has("checkout") ? "checkout" : startParams.has("keranjang") ? "keranjang" : "";
 if (startWith) {
   history.replaceState(null, "", location.pathname);
-  if (startWith === "checkout") $("#checkoutModal").classList.add("show"); else openCart();
+  if (startWith === "keranjang") openCart();
 }
 if (db) {
   $("#productGrid").innerHTML = `<p class="empty">Memuat produk...</p>`; $("#popularGrid").innerHTML = "";
   if (startWith === "keranjang") $("#cartItems").innerHTML = `<div class="cart-empty">Memuat keranjang...</div>`;
 }
 else renderAll();
-loadStore().then(() => {
+loadStore().then(async () => {
   const cat = sessionStorage.getItem("tasura_cat");
   if (cat) { sessionStorage.removeItem("tasura_cat"); activeCat = cat; renderCategories(); renderProducts(); }
-  if (startWith === "checkout") { if (cart.length) $("#checkoutBtn").onclick(); else { $("#checkoutModal").classList.remove("show"); openCart(); } }
+  if (startWith === "checkout") { await Auth.ready; if (cart.length) $("#checkoutBtn").onclick(); else openCart(); }
 });

@@ -38,10 +38,11 @@ const Auth = (() => {
     f.password.autocomplete = m === "login" ? "current-password" : "new-password";
   }
 
-  function openAuth(m = "login") {
+  function openAuth(m = "login", note = "") {
     setMode(m);
     $("#authModal").classList.add("show");
     if (!db) msg("Login belum aktif: isi URL & anon key Supabase di config.js (lihat README).", "info");
+    else if (note) msg(note, "info");
   }
   const closeAuth = () => $("#authModal").classList.remove("show");
 
@@ -189,19 +190,30 @@ const Auth = (() => {
     };
   }
 
+  // ready: selesai saat status login pertama kali diketahui
+  let markReady; const ready = new Promise(r => markReady = r);
   async function init() {
     bind(); renderAccountBtn();
-    if (!db) return;
+    if (!db) return markReady();
     db.auth.onAuthStateChange((event, session) => {
       state.user = session?.user || null;
       // jalankan di luar callback agar tidak deadlock dengan client Supabase
       setTimeout(async () => {
         await loadProfile(); renderAccountBtn(); await checkAdmin();
+        markReady();
         if (event === "PASSWORD_RECOVERY") openAuth("newpass");
+        // Lanjutkan aksi yang tertunda karena harus login dulu (mis. checkout), termasuk setelah login Google
+        if (state.user && sessionStorage.getItem("tasura_after_login")) {
+          const next = sessionStorage.getItem("tasura_after_login");
+          sessionStorage.removeItem("tasura_after_login");
+          document.dispatchEvent(new CustomEvent("tasura:login", { detail: next }));
+        }
+        if (!state.user) document.dispatchEvent(new CustomEvent("tasura:logout"));
       }, 0);
     });
+    setTimeout(markReady, 4000); // cadangan bila Supabase lambat
   }
 
   init();
-  return { state, saveProfile, prefill, openAuth, get loggedIn() { return !!state.user; } };
+  return { state, saveProfile, prefill, openAuth, ready, get loggedIn() { return !!state.user; } };
 })();
